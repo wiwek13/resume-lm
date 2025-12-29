@@ -481,7 +481,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-      target: production
+      target: development
     container_name: resumelm-app
     restart: unless-stopped
     deploy:
@@ -499,10 +499,18 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    volumes:
+      - ../src:/app/src
+      - ../public:/app/public
+      - ../next.config.ts:/app/next.config.ts
+      - ../tailwind.config.ts:/app/tailwind.config.ts
+      - ../tsconfig.json:/app/tsconfig.json
+      - ../components.json:/app/components.json
+      - ../postcss.config.mjs:/app/postcss.config.mjs
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       # Supabase config (defaults for Docker, overridable)
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-http://host.docker.internal:54321}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE}
