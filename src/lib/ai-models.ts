@@ -344,7 +344,7 @@ const MODEL_ALIASES: Record<string, string> = {
 // ========================
 
 export const DEFAULT_MODELS = {
-  PRO_USER: 'gpt-5.2',
+  PRO_USER: 'deepseek/deepseek-v3.2:nitro',
   FREE_USER: 'deepseek/deepseek-v3.2:nitro'
 } as const
 
@@ -358,19 +358,19 @@ export const DEFAULT_MODELS = {
  */
 export const MODEL_DESIGNATIONS = {
   // Fast & cheap model for parsing, simple tasks, quick analysis
-  FAST_CHEAP: 'claude-sonnet-4-5-20250929',
+  FAST_CHEAP: 'deepseek/deepseek-v3.2:nitro',
   // Alternative fast & cheap option (free for all users)
   FAST_CHEAP_FREE: 'deepseek/deepseek-v3.2:nitro',
   // Frontier model for complex tasks, deep analysis, best quality
-  FRONTIER: 'gpt-5.2',
+  FRONTIER: 'deepseek/deepseek-v3.2:nitro',
   // Alternative frontier model
-  FRONTIER_ALT: 'claude-opus-4-5-20251101',
+  FRONTIER_ALT: 'deepseek/deepseek-v3.2:nitro',
   // Balanced model - good quality but faster/cheaper than frontier
-  BALANCED: 'google/gemini-3-pro-preview',
+  BALANCED: 'deepseek/deepseek-v3.2:nitro',
   // Vision-capable model for image analysis
-  VISION: 'claude-sonnet-4-5-20250929',
+  VISION: 'deepseek/deepseek-v3.2:nitro',
   // Default models by user type
-  DEFAULT_PRO: 'gpt-5.2',
+  DEFAULT_PRO: 'deepseek/deepseek-v3.2:nitro',
   DEFAULT_FREE: 'deepseek/deepseek-v3.2:nitro'
 } as const
 
