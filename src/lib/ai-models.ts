@@ -87,7 +87,7 @@ export const PROVIDERS: Partial<Record<ServiceName, AIProvider>> = {
     envKey: 'OPENROUTER_API_KEY',
     sdkInitializer: 'openrouter',
     unstable: false
-    
+
   },
 }
 
@@ -228,14 +228,14 @@ export const AI_MODELS: AIModel[] = [
     }
   },
   {
-    id: 'deepseek/deepseek-v3.2:nitro',
-    name: 'DeepSeek V3.2',
+    id: 'deepseek/deepseek-chat',
+    name: 'DeepSeek V3',
     provider: 'openrouter',
     features: {
       isFree: true,
       isRecommended: true,
       isUnstable: false,
-      maxTokens: 163840,
+      maxTokens: 64000,
       supportsVision: false,
       supportsTools: true
     },
@@ -334,7 +334,7 @@ const MODEL_ALIASES: Record<string, string> = {
   // Legacy GPT-5 reference → latest GPT-5.2
   'gpt-5': 'gpt-5.2',
   // Allow DeepSeek without the nitro suffix
-  'deepseek/deepseek-v3.2': 'deepseek/deepseek-v3.2:nitro',
+  'deepseek/deepseek-v3.2': 'deepseek/deepseek-chat',
   // Legacy Gemini 3 model ID without provider prefix
   'gemini-3-pro-preview': 'google/gemini-3-pro-preview',
 }
@@ -344,8 +344,8 @@ const MODEL_ALIASES: Record<string, string> = {
 // ========================
 
 export const DEFAULT_MODELS = {
-  PRO_USER: 'deepseek/deepseek-v3.2:nitro',
-  FREE_USER: 'deepseek/deepseek-v3.2:nitro'
+  PRO_USER: 'deepseek/deepseek-chat',
+  FREE_USER: 'deepseek/deepseek-chat'
 } as const
 
 // ========================
@@ -358,20 +358,20 @@ export const DEFAULT_MODELS = {
  */
 export const MODEL_DESIGNATIONS = {
   // Fast & cheap model for parsing, simple tasks, quick analysis
-  FAST_CHEAP: 'deepseek/deepseek-v3.2:nitro',
+  FAST_CHEAP: 'deepseek/deepseek-chat',
   // Alternative fast & cheap option (free for all users)
-  FAST_CHEAP_FREE: 'deepseek/deepseek-v3.2:nitro',
+  FAST_CHEAP_FREE: 'deepseek/deepseek-chat',
   // Frontier model for complex tasks, deep analysis, best quality
-  FRONTIER: 'deepseek/deepseek-v3.2:nitro',
+  FRONTIER: 'deepseek/deepseek-chat',
   // Alternative frontier model
-  FRONTIER_ALT: 'deepseek/deepseek-v3.2:nitro',
+  FRONTIER_ALT: 'deepseek/deepseek-chat',
   // Balanced model - good quality but faster/cheaper than frontier
-  BALANCED: 'deepseek/deepseek-v3.2:nitro',
+  BALANCED: 'deepseek/deepseek-chat',
   // Vision-capable model for image analysis
-  VISION: 'deepseek/deepseek-v3.2:nitro',
+  VISION: 'deepseek/deepseek-chat',
   // Default models by user type
-  DEFAULT_PRO: 'deepseek/deepseek-v3.2:nitro',
-  DEFAULT_FREE: 'deepseek/deepseek-v3.2:nitro'
+  DEFAULT_PRO: 'deepseek/deepseek-chat',
+  DEFAULT_FREE: 'deepseek/deepseek-chat'
 } as const
 
 // Type for model designations
@@ -473,7 +473,7 @@ export function groupModelsByProvider(): GroupedModels[] {
     .map(providerId => {
       const provider = getProviderById(providerId)
       if (!provider) return null
-      
+
       return {
         provider: providerId,
         name: provider.name,
@@ -496,9 +496,9 @@ export function getSelectableModels(isPro: boolean, apiKeys: ApiKey[]): AIModel[
 export function getModelSDKConfig(modelId: string): { provider: AIProvider; modelId: string } | undefined {
   const model = getModelById(modelId)
   if (!model) return undefined
-  
+
   const provider = getProviderById(model.provider)
   if (!provider) return undefined
-  
+
   return { provider, modelId }
 }

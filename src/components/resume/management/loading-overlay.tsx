@@ -10,6 +10,7 @@ export const CREATION_STEPS = [
   { id: 'analyzing', label: 'Analyzing Job Description' },
   { id: 'formatting', label: 'Formatting Requirements' },
   { id: 'tailoring', label: 'Tailoring Resume Content' },
+  { id: 'scoring', label: 'Generating Score' },
   { id: 'finalizing', label: 'Finalizing Resume' },
 ] as const;
 
@@ -40,7 +41,7 @@ export function LoadingOverlay({ currentStep }: LoadingOverlayProps) {
           {CREATION_STEPS.map((step, index) => {
             const isActive = step.id === currentStep;
             const isCompleted = index < currentStepIndex;
-            
+
             return (
               <div
                 key={step.id}
@@ -77,6 +78,7 @@ export function LoadingOverlay({ currentStep }: LoadingOverlayProps) {
             {currentStep === 'analyzing' && "Reading and understanding the job requirements..."}
             {currentStep === 'formatting' && "Structuring the job information..."}
             {currentStep === 'tailoring' && "Optimizing your resume for the best match..."}
+            {currentStep === 'scoring' && "Analyzing resume effectiveness..."}
             {currentStep === 'finalizing' && "Putting the final touches..."}
           </p>
         </div>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, TrendingUp, Target, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { generateResumeScore } from "@/utils/actions/resumes/actions";
 import { Resume, Job as JobType } from "@/lib/types";
 import { ApiKey } from "@/utils/ai-tools";
@@ -17,7 +17,7 @@ export interface ResumeScoreMetrics {
     score: number;
     reason: string;
   };
-  
+
   completeness: {
     contactInformation: {
       score: number;
@@ -28,7 +28,7 @@ export interface ResumeScoreMetrics {
       reason: string;
     };
   };
-  
+
   impactScore: {
     activeVoiceUsage: {
       score: number;
@@ -110,7 +110,7 @@ function getStoredScores(resumeId: string): ResumeScoreMetrics | null {
   try {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!stored) return null;
-    
+
     const scores = new Map(JSON.parse(stored));
     return scores.get(resumeId) as ResumeScoreMetrics | null;
   } catch (error) {
@@ -152,16 +152,16 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
     }
   }, [resume.id]);
 
-  const handleRecalculate = async () => {
+  const handleRecalculate = useCallback(async () => {
     setIsCalculating(true);
     try {
-        const MODEL_STORAGE_KEY = 'resumelm-default-model';
-        // const LOCAL_STORAGE_KEY = 'resumelm-api-keys';
-  
-        const selectedModel = localStorage.getItem(MODEL_STORAGE_KEY);
-        // const storedKeys = localStorage.getItem(LOCAL_STORAGE_KEY);
-        const apiKeys: string[] = [];
-        
+      const MODEL_STORAGE_KEY = 'resumelm-default-model';
+      // const LOCAL_STORAGE_KEY = 'resumelm-api-keys';
+
+      const selectedModel = localStorage.getItem(MODEL_STORAGE_KEY);
+      // const storedKeys = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const apiKeys: string[] = [];
+
       // Convert job type to match the expected schema
       const jobForScoring = job ? {
         ...job,
@@ -186,7 +186,18 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
     } finally {
       setIsCalculating(false);
     }
-  };
+  }, [resume, job]);
+
+  // Auto-trigger scoring for tailored resumes
+  useEffect(() => {
+    // Only auto-trigger if:
+    // 1. It's a tailored resume (job exists)
+    // 2. We don't have score data yet
+    // 3. We aren't already calculating
+    if (job && !scoreData && !isCalculating) {
+      handleRecalculate();
+    }
+  }, [job, scoreData, isCalculating, handleRecalculate]);
 
   // If no score data is available, show the empty state
   if (!scoreData) {
@@ -199,19 +210,19 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
             </div>
             <div>
               <h3 className="font-semibold mb-2">Resume Score Analysis</h3>
-                             <p className="text-sm text-muted-foreground mb-4">
-                 Generate a comprehensive analysis of your resume&apos;s effectiveness
-               </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Generate a comprehensive analysis of your resume&apos;s effectiveness
+              </p>
               <Button
                 onClick={handleRecalculate}
                 disabled={isCalculating}
                 className="w-full sm:w-auto"
               >
-                <RefreshCw 
+                <RefreshCw
                   className={cn(
                     "mr-2 h-4 w-4",
                     isCalculating && "animate-spin"
-                  )} 
+                  )}
                 />
                 {isCalculating ? "Analyzing..." : "Generate Score"}
               </Button>
@@ -236,11 +247,11 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
           variant="outline"
           size="sm"
         >
-          <RefreshCw 
+          <RefreshCw
             className={cn(
               "mr-2 h-3 w-3",
               isCalculating && "animate-spin"
-            )} 
+            )}
           />
           Recalculate
         </Button>
@@ -387,9 +398,9 @@ function ScoreItem({ label, score, reason }: { label: string; score: number; rea
         <span className="text-sm font-medium">{camelCaseToReadable(label)}</span>
         <span className={cn(
           "text-xs px-2 py-1 rounded-full font-medium",
-          score >= 70 ? "bg-green-100 text-green-700" : 
-          score >= 50 ? "bg-yellow-100 text-yellow-700" : 
-          "bg-red-100 text-red-700"
+          score >= 70 ? "bg-green-100 text-green-700" :
+            score >= 50 ? "bg-yellow-100 text-yellow-700" :
+              "bg-red-100 text-red-700"
         )}>
           {score}/100
         </span>
@@ -407,11 +418,11 @@ function ScoreItem({ label, score, reason }: { label: string; score: number; rea
   );
 }
 
-function JobAlignmentItem({ 
-  label, 
-  data 
-}: { 
-  label: string; 
+function JobAlignmentItem({
+  label,
+  data
+}: {
+  label: string;
   data: {
     score: number;
     reason: string;
@@ -438,9 +449,9 @@ function JobAlignmentItem({
         <span className="text-sm font-medium text-blue-700">{camelCaseToReadable(label)}</span>
         <span className={cn(
           "text-xs px-2 py-1 rounded-full font-medium",
-          data.score >= 70 ? "bg-blue-100 text-blue-700" : 
-          data.score >= 50 ? "bg-yellow-100 text-yellow-700" : 
-          "bg-red-100 text-red-700"
+          data.score >= 70 ? "bg-blue-100 text-blue-700" :
+            data.score >= 50 ? "bg-yellow-100 text-yellow-700" :
+              "bg-red-100 text-red-700"
         )}>
           {data.score}/100
         </span>
@@ -454,7 +465,7 @@ function JobAlignmentItem({
         />
       </div>
       <p className="text-xs text-blue-600">{data.reason}</p>
-      
+
       {/* Show matched keywords */}
       {data.matchedKeywords && data.matchedKeywords.length > 0 && (
         <div className="space-y-1">
@@ -468,7 +479,7 @@ function JobAlignmentItem({
           </div>
         </div>
       )}
-      
+
       {/* Show missing keywords */}
       {data.missingKeywords && data.missingKeywords.length > 0 && (
         <div className="space-y-1">
@@ -482,7 +493,7 @@ function JobAlignmentItem({
           </div>
         </div>
       )}
-      
+
       {/* Show gap analysis */}
       {data.gapAnalysis && data.gapAnalysis.length > 0 && (
         <div className="space-y-1">

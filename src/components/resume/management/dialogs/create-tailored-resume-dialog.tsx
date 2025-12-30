@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Profile, ResumeSummary } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, Plus, Brain, Copy } from "lucide-react";
-import { createTailoredResume, getResumeById } from "@/utils/actions/resumes/actions";
+import { createTailoredResume, getResumeById, generateResumeScore, ResumeScoreMetrics } from "@/utils/actions/resumes/actions";
 import { CreateBaseResumeDialog } from "./create-base-resume-dialog";
 import { tailorResumeToJob } from "@/utils/actions/jobs/ai";
 import { formatJobListing } from "@/utils/actions/jobs/ai";
 import { createJob } from "@/utils/actions/jobs/actions";
 import { MiniResumePreview } from "../../shared/mini-resume-preview";
 import { LoadingOverlay, type CreationStep } from "../loading-overlay";
-import { BaseResumeSelector } from "../base-resume-selector"; 
+import { BaseResumeSelector } from "../base-resume-selector";
 import { ImportMethodRadioGroup } from "../import-method-radio-group";
 import { JobDescriptionInput } from "../job-description-input";
 import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
@@ -24,6 +24,28 @@ interface CreateTailoredResumeDialogProps {
   children: React.ReactNode;
   baseResumes?: ResumeSummary[];
   profile?: Profile;
+}
+
+// Helper to store scores (mirrors ResumeScorePanel logic)
+const SCORE_STORAGE_KEY = 'resumelm-resume-scores';
+const MAX_SCORES = 10;
+
+function updateStoredScores(resumeId: string, score: ResumeScoreMetrics) {
+  try {
+    const stored = localStorage.getItem(SCORE_STORAGE_KEY);
+    const scores = stored ? new Map(JSON.parse(stored)) : new Map();
+
+    // Maintain only MAX_SCORES entries
+    if (scores.size >= MAX_SCORES) {
+      const oldestKey = scores.keys().next().value;
+      scores.delete(oldestKey);
+    }
+
+    scores.set(resumeId, score);
+    localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(Array.from(scores)));
+  } catch (error) {
+    console.error('Error storing score:', error);
+  }
 }
 
 export function CreateTailoredResumeDialog({ children, baseResumes, profile }: CreateTailoredResumeDialogProps) {
@@ -39,7 +61,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState({ title: '', description: '' });
   const router = useRouter();
-  
+
 
   function redactSecrets(text: string) {
     return text
@@ -107,7 +129,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
     try {
       setIsCreating(true);
       setCurrentStep('analyzing');
-      
+
       // Reset validation states
       setIsBaseResumeInvalid(false);
       setIsJobDescriptionInvalid(false);
@@ -146,15 +168,15 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
             setCurrentStep('formatting');
             const jobEntry = await createJob(formattedJobListing);
             if (!jobEntry?.id) throw new Error("Failed to create job entry");
-            
+
             jobId = jobEntry.id;
             jobTitle = formattedJobListing.position_title || 'Copied Resume';
             companyName = formattedJobListing.company_name || '';
           } catch (error: Error | unknown) {
             if (error instanceof Error && (
-                error.message.toLowerCase().includes('api key') || 
-                error.message.toLowerCase().includes('unauthorized') ||
-                error.message.toLowerCase().includes('invalid key'))
+              error.message.toLowerCase().includes('api key') ||
+              error.message.toLowerCase().includes('unauthorized') ||
+              error.message.toLowerCase().includes('invalid key'))
             ) {
               setErrorMessage({
                 title: "API Key Error",
@@ -224,9 +246,9 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
         });
       } catch (error: Error | unknown) {
         if (error instanceof Error && (
-            error.message.toLowerCase().includes('api key') || 
-            error.message.toLowerCase().includes('unauthorized') ||
-            error.message.toLowerCase().includes('invalid key'))
+          error.message.toLowerCase().includes('api key') ||
+          error.message.toLowerCase().includes('unauthorized') ||
+          error.message.toLowerCase().includes('invalid key'))
         ) {
           setErrorMessage({
             title: "API Key Error",
@@ -269,9 +291,9 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
         });
       } catch (error: Error | unknown) {
         if (error instanceof Error && (
-            error.message.toLowerCase().includes('api key') || 
-            error.message.toLowerCase().includes('unauthorized') ||
-            error.message.toLowerCase().includes('invalid key'))
+          error.message.toLowerCase().includes('api key') ||
+          error.message.toLowerCase().includes('unauthorized') ||
+          error.message.toLowerCase().includes('invalid key'))
         ) {
           setErrorMessage({
             title: "API Key Error",
@@ -294,7 +316,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
 
       setCurrentStep('finalizing');
 
-      
+
       // 5. Create the tailored resume with job reference
       const resume = await createTailoredResume(
         baseResume,
@@ -303,6 +325,33 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
         formattedJobListing.company_name || '',
         tailoredContent,
       );
+
+      // 6. Generate Resume Score
+      setCurrentStep('scoring');
+
+      try {
+        const jobForScoring = {
+          ...jobEntry,
+          employment_type: jobEntry.employment_type || undefined
+        };
+
+        const score = await generateResumeScore(
+          resume,
+          jobForScoring,
+          {
+            model: selectedModel || '',
+            apiKeys
+          }
+        );
+
+        // Save score to local storage so it's ready when the user lands on the editor
+        if (score) {
+          updateStoredScores(resume.id, score as ResumeScoreMetrics);
+        }
+      } catch (scoreError) {
+        console.error('Failed to generate automatic score:', scoreError);
+        // We continue even if scoring fails, as the resume itself is created
+      }
 
       toast({
         title: "Success",
@@ -386,7 +435,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
               animation: shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
             }
           `}</style>
-          
+
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
@@ -398,7 +447,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
                   Create Tailored Resume
                 </DialogTitle>
                 <DialogDescription className="text-sm text-gray-600">
-                  {dialogStep === 1 
+                  {dialogStep === 1
                     ? "Choose a base resume to start with"
                     : "Configure job details and tailoring method"
                   }
@@ -429,7 +478,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
           {/* Content */}
           <div className="px-6 py-2 min-h-[400px] relative">
             {isCreating && <LoadingOverlay currentStep={currentStep} />}
-            
+
             {dialogStep === 1 && (
               <div className="space-y-6">
                 {/* Header Section */}
@@ -442,7 +491,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
                     Select a base resume to tailor for this job opportunity.
                   </p>
                 </div>
-                
+
                 {/* Resume Selector */}
                 <div className="space-y-4">
                   <BaseResumeSelector
@@ -491,7 +540,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
                       <p className="text-xs text-gray-600">Paste the job posting details</p>
                     </div>
                   </div>
-                  
+
                   <div className="ml-10">
                     <JobDescriptionInput
                       value={jobDescription}
@@ -512,7 +561,7 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
                       <p className="text-xs text-gray-600">Choose your customization approach</p>
                     </div>
                   </div>
-                  
+
                   <div className="ml-10">
                     <ImportMethodRadioGroup
                       value={importOption}
@@ -599,8 +648,8 @@ export function CreateTailoredResumeDialog({ children, baseResumes, profile }: C
                   </Button>
                 )}
                 {dialogStep === 2 && (
-                  <Button 
-                    onClick={handleCreate} 
+                  <Button
+                    onClick={handleCreate}
                     disabled={isCreating}
                     size="sm"
                     className="bg-pink-600 hover:bg-pink-700 text-white"
