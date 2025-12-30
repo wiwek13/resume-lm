@@ -20,6 +20,7 @@ import {
 } from '../dynamic-components';
 import { ResumeEditorTabs } from "../header/resume-editor-tabs";
 import ResumeScorePanel from "./resume-score-panel";
+import { SectionOrderForm } from "../forms/section-order-form";
 
 
 
@@ -68,7 +69,7 @@ export function EditorPanel({
               />
             </Accordion>
 
-            {/* Tabs */}  
+            {/* Tabs */}
             <Tabs defaultValue="basic" className="mb-4">
               <ResumeEditorTabs />
 
@@ -153,12 +154,27 @@ export function EditorPanel({
                     <div className="h-24 bg-muted rounded-md" />
                   </div>
                 }>
-                  <DocumentSettingsForm
-                    documentSettings={resume.document_settings!}
-                    onChange={(_field: 'document_settings', value: DocumentSettings) => {
-                      onResumeChange('document_settings', value);
-                    }}
-                  />
+                  {/* Section Order */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Section Order & Style Presets</h3>
+                    <SectionOrderForm
+                      sectionOrder={resume.section_order || ['work_experience', 'education', 'skills', 'projects']}
+                      sectionConfigs={resume.section_configs}
+                      documentSettings={resume.document_settings}
+                      onChange={onResumeChange}
+                    />
+                  </div>
+
+                  {/* Document Settings */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Document Settings</h3>
+                    <DocumentSettingsForm
+                      documentSettings={resume.document_settings!}
+                      onChange={(_field: 'document_settings', value: DocumentSettings) => {
+                        onResumeChange('document_settings', value);
+                      }}
+                    />
+                  </div>
                 </Suspense>
               </TabsContent>
 
@@ -184,13 +200,13 @@ export function EditorPanel({
       </div>
 
       <div className={cn(
-        "absolute w-full bottom-0 rounded-lg border`", 
+        "absolute w-full bottom-0 rounded-lg border`",
         resume.is_base_resume
           ? "bg-purple-50/50 border-purple-200/40"
           : "bg-pink-50/80 border-pink-300/50 shadow-sm shadow-pink-200/20"
       )}>
-        <ChatBot 
-          resume={resume} 
+        <ChatBot
+          resume={resume}
           onResumeChange={onResumeChange}
           job={job}
         />

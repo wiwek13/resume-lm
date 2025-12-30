@@ -566,14 +566,38 @@ export const ResumePDFDocument = memo(function ResumePDFDocument({ resume }: Res
   // Memoize styles based on document settings
   const styles = useMemo(() => createResumeStyles(resume.document_settings), [resume.document_settings]);
 
+  // Default section order if not specified
+  const sectionOrder = resume.section_order || ['work_experience', 'education', 'skills', 'projects'];
+
+  // Check if section is visible
+  const isSectionVisible = (sectionName: string) => {
+    return resume.section_configs?.[sectionName]?.visible ?? true;
+  };
+
+  // Helper to render section by name
+  const renderSection = (sectionName: string) => {
+    // Skip hidden sections
+    if (!isSectionVisible(sectionName)) return null;
+
+    switch (sectionName) {
+      case 'skills':
+        return <SkillsSection key="skills" skills={resume.skills} styles={styles} />;
+      case 'work_experience':
+        return <ExperienceSection key="work_experience" experiences={resume.work_experience} styles={styles} />;
+      case 'projects':
+        return <ProjectsSection key="projects" projects={resume.projects} styles={styles} />;
+      case 'education':
+        return <EducationSection key="education" education={resume.education} styles={styles} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <PDFDocument>
       <PDFPage size="LETTER" style={styles.page}>
         <HeaderSection resume={resume} styles={styles} />
-        <SkillsSection skills={resume.skills} styles={styles} />
-        <ExperienceSection experiences={resume.work_experience} styles={styles} />
-        <ProjectsSection projects={resume.projects} styles={styles} />
-        <EducationSection education={resume.education} styles={styles} />
+        {sectionOrder.map(renderSection)}
 
         {resume.document_settings?.show_ubc_footer && (
           <View style={styles.footer}>
