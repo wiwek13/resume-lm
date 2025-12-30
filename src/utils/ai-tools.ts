@@ -47,6 +47,22 @@ export function initializeAIClient(config?: AIConfig, isPro?: boolean, useThinki
     const resolvedModelId = modelData?.id ?? model;
     const provider = modelData ? getProviderById(modelData.provider) : undefined;
 
+    // Handle custom/unknown OpenRouter models (those with / in the ID)
+    if (!modelData && resolvedModelId.includes('/')) {
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      if (!openRouterKey) {
+        throw new Error('OpenRouter API key not found (OPENROUTER_API_KEY)');
+      }
+      return createOpenRouter({
+        apiKey: openRouterKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+        headers: {
+          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+          'X-Title': 'ResumeLM'
+        },
+      })(resolvedModelId) as LanguageModelV1;
+    }
+
     if (!modelData || !provider) {
       throw new Error(`Unknown model: ${model}`);
     }
@@ -110,6 +126,23 @@ export function initializeAIClient(config?: AIConfig, isPro?: boolean, useThinki
   const modelData = getModelById(model) ?? HIDDEN_MODELS[model];
   const resolvedModelId = modelData?.id ?? model;
   const provider = modelData ? getProviderById(modelData.provider) : undefined;
+
+  // Handle custom/unknown OpenRouter models (those with / in the ID)
+  if (!modelData && resolvedModelId.includes('/')) {
+    // Try server-side OpenRouter key first, then user's key
+    const openRouterKey = process.env.OPENROUTER_API_KEY || apiKeys.find(k => k.service === 'openrouter')?.key;
+    if (!openRouterKey) {
+      throw new Error('OpenRouter API key not found');
+    }
+    return createOpenRouter({
+      apiKey: openRouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      headers: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+        'X-Title': 'ResumeLM'
+      }
+    })(resolvedModelId) as LanguageModelV1;
+  }
 
   if (!modelData || !provider) {
     throw new Error(`Unknown model: ${model}`);

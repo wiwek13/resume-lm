@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { ModelSelector } from "@/components/shared/model-selector";
 import { getDefaultModel } from "@/lib/ai-models";
-import { useApiKeys, useDefaultModel } from "@/hooks/use-api-keys";
+import { useApiKeys, useDefaultModel, useCustomModels } from "@/hooks/use-api-keys";
 import { TrialStartButton } from "@/components/trial/trial-start-button";
 import { useTrialGate } from "@/components/trial/trial-gate";
 
@@ -32,11 +32,12 @@ export function AppHeader({
 }: AppHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const trialGate = useTrialGate();
-  
+
   // Use synchronized hooks for instant updates across components
   const { apiKeys } = useApiKeys();
   const { defaultModel, setDefaultModel } = useDefaultModel();
-  
+  const { customModels } = useCustomModels();
+
   // Track if we've initialized the default model
   const hasInitialized = useRef(false);
 
@@ -44,7 +45,7 @@ export function AppHeader({
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
-    
+
     if (!defaultModel) {
       const defaultModelId = getDefaultModel(isProPlan);
       setDefaultModel(defaultModelId);
@@ -70,7 +71,7 @@ export function AppHeader({
     <header className="h-14 border-b backdrop-blur-xl fixed top-0 left-0 right-0 z-40 shadow-md border-purple-200/50">
       {/* Gradient backdrop with blur */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-50/95 via-white/95 to-purple-50/95" />
-      
+
       {/* Gradient Overlays */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3e8ff30_0%,#ffffff40_50%,#f3e8ff30_100%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_-40%,#f3e8ff30_0%,transparent_100%)] pointer-events-none" />
@@ -103,7 +104,7 @@ export function AppHeader({
                     <div className="h-4 w-px bg-purple-200/50 ml-2 lg:ml-3" />
                   </>
                 )}
-                
+
                 {/* Model Selector - Responsive Width */}
                 <div className="mr-2 lg:mr-3">
                   <ModelSelector
@@ -111,16 +112,17 @@ export function AppHeader({
                     onValueChange={handleModelChange}
                     apiKeys={apiKeys}
                     isProPlan={isProPlan}
+                    customModels={customModels}
                     className="w-[220px] lg:w-[260px] xl:w-[300px] h-8 text-xs"
                     placeholder="Select AI model"
                     showToast={false}
                   />
                 </div>
                 <div className="h-4 w-px bg-purple-200/50" />
-                
+
                 <div className="flex items-center px-2 lg:px-3 py-1">
-                  <Link 
-                    href="/profile" 
+                  <Link
+                    href="/profile"
                     onClick={handleProfileClick}
                     className={cn(
                       "flex items-center gap-1.5 px-2 lg:px-3 py-1",
@@ -156,7 +158,7 @@ export function AppHeader({
                       ) : (
                         <ProUpgradeButton className="w-full" />
                       ))}
-                    
+
                     {/* Mobile Model Selector */}
                     <div className="px-1">
                       <ModelSelector
@@ -164,12 +166,13 @@ export function AppHeader({
                         onValueChange={handleModelChange}
                         apiKeys={apiKeys}
                         isProPlan={isProPlan}
+                        customModels={customModels}
                         className="w-full h-10 text-sm"
                         placeholder="Select AI model"
                         showToast={false}
                       />
                     </div>
-                    
+
                     <Link
                       href="/profile"
                       onClick={handleProfileClick}

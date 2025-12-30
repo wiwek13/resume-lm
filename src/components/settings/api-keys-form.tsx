@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Copy, Check } from "lucide-react"
+import { Eye, EyeOff, Copy, Check, Plus, X } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { ServiceName } from "@/lib/types"
 import type { ApiKey } from "@/lib/ai-models"
@@ -12,18 +12,23 @@ import { cn } from "@/lib/utils"
 import replaceSpecialCharacters from 'replace-special-characters'
 import { ModelSelector } from "@/components/shared/model-selector"
 import { AI_MODELS, MODEL_DESIGNATIONS, getProvidersArray } from "@/lib/ai-models"
-import { useApiKeys, useDefaultModel } from "@/hooks/use-api-keys"
+import { useApiKeys, useDefaultModel, useCustomModels } from "@/hooks/use-api-keys"
 
 export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
-  // Use synchronized hooks for API keys and default model
+  // Use synchronized hooks for API keys, default model, and custom models
   const { apiKeys, setApiKeys } = useApiKeys()
   const { defaultModel, setDefaultModel } = useDefaultModel()
-  
+  const { customModels, addCustomModel, removeCustomModel } = useCustomModels()
+
   // UI-specific local state
   const [visibleKeys, setVisibleKeys] = useState<Record<ServiceName, boolean>>({} as Record<ServiceName, boolean>)
   const [newKeyValues, setNewKeyValues] = useState<Record<ServiceName, string>>({} as Record<ServiceName, string>)
   const [copiedKey, setCopiedKey] = useState<ServiceName | null>(null)
-  
+
+  // Custom model input state
+  const [newCustomModelId, setNewCustomModelId] = useState('')
+  const [newCustomModelName, setNewCustomModelName] = useState('')
+
   // Track if we've initialized the default model
   const hasInitialized = useRef(false)
 
@@ -31,7 +36,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
-    
+
     // Only set default if there's no model selected
     if (!defaultModel) {
       if (isProPlan) {
@@ -107,10 +112,10 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
     const currentModel = AI_MODELS.find(m => m.id === defaultModel)
     if (currentModel?.provider === service) {
       // Find first available model that has API key
-      const firstAvailableModel = AI_MODELS.find(m => 
+      const firstAvailableModel = AI_MODELS.find(m =>
         apiKeys.some(k => k.service === m.provider && k.service !== service)
       )
-      
+
       if (firstAvailableModel) {
         setDefaultModel(firstAvailableModel.id)
         toast.info(`Switched to ${firstAvailableModel.name}`)
@@ -123,7 +128,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
     toast.success('API key removed successfully')
   }
 
-  const getExistingKey = (service: ServiceName) => 
+  const getExistingKey = (service: ServiceName) =>
     apiKeys.find(k => k.service === service)
 
   const handleModelChange = (modelId: string) => {
@@ -151,6 +156,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
           onValueChange={handleModelChange}
           apiKeys={apiKeys}
           isProPlan={isProPlan}
+          customModels={customModels}
           className="w-full mt-1"
           placeholder="Select an AI model"
         />
@@ -188,7 +194,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
             const providerModels = AI_MODELS.filter(model => model.provider === provider.id)
 
             return (
-              <div 
+              <div
                 key={provider.id}
                 className={cn(
                   "p-4 rounded-lg bg-white/30 border transition-all hover:bg-white/40"
@@ -221,8 +227,8 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
                         onClick={() => handleCopyKey(provider.id, existingKey.key)}
                         className={cn(
                           "h-7 px-2 transition-colors",
-                          copiedKey === provider.id 
-                            ? "text-emerald-500 hover:text-emerald-600" 
+                          copiedKey === provider.id
+                            ? "text-emerald-500 hover:text-emerald-600"
                             : "text-muted-foreground hover:text-gray-900"
                         )}
                       >
@@ -279,14 +285,14 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
                       >
                         {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </Button>
-                      <Button 
+                      <Button
                         className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 h-9 px-4 text-sm transition-colors"
                         onClick={() => handleUpdateKey(provider.id)}
                       >
                         Save
                       </Button>
                     </div>
-                    <a 
+                    <a
                       href={provider.apiLink}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -319,7 +325,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
               const providerModels = AI_MODELS.filter(model => model.provider === provider.id)
 
               return (
-                <div 
+                <div
                   key={provider.id}
                   className={cn(
                     "p-4 rounded-lg bg-white/30 border transition-all hover:bg-white/40",
@@ -329,7 +335,7 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
                   <div className="absolute top-2 right-2 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs font-medium">
                     Unstable
                   </div>
-                  
+
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Label className="text-sm font-medium text-gray-800">{provider.name}</Label>
@@ -357,8 +363,8 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
                           onClick={() => handleCopyKey(provider.id, existingKey.key)}
                           className={cn(
                             "h-7 px-2 transition-colors",
-                            copiedKey === provider.id 
-                              ? "text-emerald-500 hover:text-emerald-600" 
+                            copiedKey === provider.id
+                              ? "text-emerald-500 hover:text-emerald-600"
                               : "text-muted-foreground hover:text-gray-900"
                           )}
                         >
@@ -415,14 +421,14 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
                         >
                           {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </Button>
-                        <Button 
+                        <Button
                           className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 h-9 px-4 text-sm transition-colors"
                           onClick={() => handleUpdateKey(provider.id)}
                         >
                           Save
                         </Button>
                       </div>
-                      <a 
+                      <a
                         href={provider.apiLink}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -443,6 +449,116 @@ export function ApiKeysForm({ isProPlan }: { isProPlan: boolean }) {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Custom OpenRouter Models Card */}
+      <div className="p-5 rounded-xl bg-gradient-to-br from-white/50 to-white/30 border border-white/40 shadow-xl backdrop-blur-sm">
+        <Label className="text-base font-semibold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+          Custom OpenRouter Models
+        </Label>
+        <div className="mt-2 mb-4 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Add any OpenRouter model by entering its model ID. Find model IDs at{' '}
+            <a
+              href="https://openrouter.ai/models"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-violet-600 hover:text-violet-700 underline underline-offset-2"
+            >
+              openrouter.ai/models
+            </a>
+          </p>
+        </div>
+
+        {/* Add Custom Model Form */}
+        <div className="space-y-3 mb-4">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Model ID (e.g., deepseek/deepseek-r1:free)"
+              value={newCustomModelId}
+              onChange={(e) => setNewCustomModelId(e.target.value)}
+              className="bg-white/50 flex-1 h-9 text-sm border-black/20 focus:border-black/30 hover:border-black/25 transition-colors"
+            />
+            <Input
+              type="text"
+              placeholder="Display Name (optional)"
+              value={newCustomModelName}
+              onChange={(e) => setNewCustomModelName(e.target.value)}
+              className="bg-white/50 w-48 h-9 text-sm border-black/20 focus:border-black/30 hover:border-black/25 transition-colors"
+            />
+            <Button
+              className="bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 h-9 px-4 text-sm transition-colors"
+              onClick={() => {
+                if (!newCustomModelId.trim()) {
+                  toast.error('Please enter a model ID')
+                  return
+                }
+                // Check if model already exists
+                if (customModels.some(m => m.id === newCustomModelId.trim())) {
+                  toast.error('This model is already added')
+                  return
+                }
+                addCustomModel(newCustomModelId, newCustomModelName)
+                setNewCustomModelId('')
+                setNewCustomModelName('')
+                toast.success('Custom model added successfully')
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </div>
+        </div>
+
+        {/* List of Custom Models */}
+        {customModels.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Your Custom Models</Label>
+            <div className="space-y-2">
+              {customModels.map((model) => (
+                <div
+                  key={model.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/30 border hover:bg-white/40 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{model.name}</span>
+                      <span className="text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full text-xs font-medium">
+                        Custom
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground font-mono truncate mt-0.5">
+                      {model.id}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      removeCustomModel(model.id)
+                      // If the removed model was the default, reset to a built-in model
+                      if (defaultModel === model.id) {
+                        setDefaultModel(MODEL_DESIGNATIONS.DEFAULT_FREE)
+                        toast.info('Default model reset')
+                      }
+                      toast.success('Custom model removed')
+                    }}
+                    className="h-7 px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-2"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {customModels.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground text-sm">
+            No custom models added yet. Add any OpenRouter model above.
+          </div>
+        )}
       </div>
     </div>
   )

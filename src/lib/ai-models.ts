@@ -27,6 +27,7 @@ export interface AIModel {
     isFree?: boolean
     isRecommended?: boolean
     isUnstable?: boolean
+    isCustom?: boolean  // User-defined custom model
     maxTokens?: number
     supportsVision?: boolean
     supportsTools?: boolean
@@ -54,6 +55,37 @@ export interface GroupedModels {
   provider: ServiceName
   name: string
   models: AIModel[]
+}
+
+/**
+ * Interface for user-defined custom models (stored in localStorage)
+ */
+export interface CustomModelInput {
+  id: string
+  name: string
+  addedAt: string
+}
+
+/**
+ * Creates an AIModel object from a custom model input.
+ * Custom models are assumed to be OpenRouter models.
+ */
+export function createCustomAIModel(custom: CustomModelInput): AIModel {
+  return {
+    id: custom.id,
+    name: custom.name,
+    provider: 'openrouter',
+    features: {
+      isCustom: true, // Mark as custom for UI display
+      isRecommended: false,
+      isUnstable: false,
+      supportsTools: true,
+    },
+    availability: {
+      requiresApiKey: true,
+      requiresPro: false,
+    },
+  }
 }
 
 // ========================
@@ -245,6 +277,24 @@ export const AI_MODELS: AIModel[] = [
     }
   },
 
+  {
+    id: 'google/gemini-2.0-flash-exp:free',
+    name: 'Gemini 2.0 Flash (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: true,
+      isUnstable: false,
+      maxTokens: 1000000,
+      supportsVision: true,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
+
   // Anthropic Models
   {
     id: 'claude-sonnet-4-20250514',
@@ -344,8 +394,8 @@ const MODEL_ALIASES: Record<string, string> = {
 // ========================
 
 export const DEFAULT_MODELS = {
-  PRO_USER: 'deepseek/deepseek-chat',
-  FREE_USER: 'deepseek/deepseek-chat'
+  PRO_USER: 'openai/gpt-oss-20b',
+  FREE_USER: 'openai/gpt-oss-20b'
 } as const
 
 // ========================
@@ -358,20 +408,20 @@ export const DEFAULT_MODELS = {
  */
 export const MODEL_DESIGNATIONS = {
   // Fast & cheap model for parsing, simple tasks, quick analysis
-  FAST_CHEAP: 'deepseek/deepseek-chat',
+  FAST_CHEAP: 'openai/gpt-oss-20b',
   // Alternative fast & cheap option (free for all users)
-  FAST_CHEAP_FREE: 'deepseek/deepseek-chat',
+  FAST_CHEAP_FREE: 'openai/gpt-oss-20b',
   // Frontier model for complex tasks, deep analysis, best quality
-  FRONTIER: 'deepseek/deepseek-chat',
+  FRONTIER: 'openai/gpt-oss-20b',
   // Alternative frontier model
-  FRONTIER_ALT: 'deepseek/deepseek-chat',
+  FRONTIER_ALT: 'openai/gpt-oss-20b',
   // Balanced model - good quality but faster/cheaper than frontier
-  BALANCED: 'deepseek/deepseek-chat',
+  BALANCED: 'openai/gpt-oss-20b',
   // Vision-capable model for image analysis
-  VISION: 'deepseek/deepseek-chat',
+  VISION: 'openai/gpt-oss-20b',
   // Default models by user type
-  DEFAULT_PRO: 'deepseek/deepseek-chat',
-  DEFAULT_FREE: 'deepseek/deepseek-chat'
+  DEFAULT_PRO: 'openai/gpt-oss-20b',
+  DEFAULT_FREE: 'openai/gpt-oss-20b'
 } as const
 
 // Type for model designations
@@ -389,11 +439,23 @@ export function getProvidersArray(): AIProvider[] {
 }
 
 /**
- * Get a model by its ID
+ * Get a model by its ID.
+ * Optionally search custom models as well.
  */
-export function getModelById(id: string): AIModel | undefined {
+export function getModelById(id: string, customModels?: CustomModelInput[]): AIModel | undefined {
   const resolvedId = MODEL_ALIASES[id] || id
-  return AI_MODELS.find(model => model.id === resolvedId)
+
+  // First check built-in models
+  const builtIn = AI_MODELS.find(model => model.id === resolvedId)
+  if (builtIn) return builtIn
+
+  // Then check custom models
+  if (customModels) {
+    const custom = customModels.find(m => m.id === resolvedId)
+    if (custom) return createCustomAIModel(custom)
+  }
+
+  return undefined
 }
 
 /**
@@ -411,19 +473,29 @@ export function getModelsByProvider(provider: ServiceName): AIModel[] {
 }
 
 /**
- * Check if a model is available for a user
+ * Check if a model is available for a user.
+ * Optionally include custom models in the check.
  */
 export function isModelAvailable(
   modelId: string,
   isPro: boolean,
-  apiKeys: ApiKey[]
+  apiKeys: ApiKey[],
+  customModels?: CustomModelInput[]
 ): boolean {
   modelId = MODEL_ALIASES[modelId] || modelId
   // Pro users have access to all models
   if (isPro) return true
 
-  const model = getModelById(modelId)
-  if (!model) return false
+  const model = getModelById(modelId, customModels)
+
+  // If model not found in built-in or custom, but it looks like an OpenRouter ID,
+  // allow it if user has OpenRouter API key (supports any custom model ID)
+  if (!model) {
+    if (modelId.includes('/')) {
+      return apiKeys.some(key => key.service === 'openrouter')
+    }
+    return false
+  }
 
   // Free model allowance
   if (model.features.isFree) return true
@@ -454,19 +526,27 @@ export function getModelProvider(modelId: string): AIProvider | undefined {
 }
 
 /**
- * Group models by provider for display
+ * Group models by provider for display.
+ * Optionally include custom models in the OpenRouter group.
  */
-export function groupModelsByProvider(): GroupedModels[] {
+export function groupModelsByProvider(customModels?: CustomModelInput[]): GroupedModels[] {
   const providerOrder: ServiceName[] = ['anthropic', 'openai', 'openrouter']
   const grouped = new Map<ServiceName, AIModel[]>()
 
-  // Group models by provider
+  // Group built-in models by provider
   AI_MODELS.forEach(model => {
     if (!grouped.has(model.provider)) {
       grouped.set(model.provider, [])
     }
     grouped.get(model.provider)!.push(model)
   })
+
+  // Add custom models to OpenRouter group
+  if (customModels && customModels.length > 0) {
+    const openrouterModels = grouped.get('openrouter') || []
+    const customAIModels = customModels.map(createCustomAIModel)
+    grouped.set('openrouter', [...openrouterModels, ...customAIModels])
+  }
 
   // Return in ordered format
   return providerOrder

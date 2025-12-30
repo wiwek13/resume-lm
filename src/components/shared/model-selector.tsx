@@ -15,7 +15,8 @@ import {
   isModelAvailable,
   groupModelsByProvider,
   type AIModel,
-  type ApiKey
+  type ApiKey,
+  type CustomModelInput
 } from '@/lib/ai-models'
 
 interface ModelSelectorProps {
@@ -23,6 +24,7 @@ interface ModelSelectorProps {
   onValueChange: (value: string) => void
   apiKeys: ApiKey[]
   isProPlan: boolean
+  customModels?: CustomModelInput[]  // User-defined custom models
   className?: string
   placeholder?: string
   showToast?: boolean
@@ -32,7 +34,7 @@ interface ModelSelectorProps {
 function UnavailableModelPopover({ children, model }: { children: React.ReactNode; model: AIModel }) {
   const [open, setOpen] = useState(false)
   const provider = getProviderById(model.provider)
-  
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -44,9 +46,9 @@ function UnavailableModelPopover({ children, model }: { children: React.ReactNod
           {children}
         </div>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-80 z-50" 
-        side="right" 
+      <PopoverContent
+        className="w-80 z-50"
+        side="right"
         align="start"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -60,7 +62,7 @@ function UnavailableModelPopover({ children, model }: { children: React.ReactNod
               To use this model, you need either a Pro subscription or a {provider?.name} API key.
             </p>
           </div>
-          
+
           <div className="space-y-2">
             {/* Pro Option */}
             <div className="p-3 rounded-lg border border-purple-200/50 bg-gradient-to-br from-purple-50/50 to-purple-100/30">
@@ -111,26 +113,27 @@ function UnavailableModelPopover({ children, model }: { children: React.ReactNod
   )
 }
 
-export function ModelSelector({ 
-  value, 
-  onValueChange, 
-  apiKeys, 
-  isProPlan, 
+export function ModelSelector({
+  value,
+  onValueChange,
+  apiKeys,
+  isProPlan,
+  customModels = [],
   className,
   placeholder = "Select an AI model",
   showToast = true
 }: ModelSelectorProps) {
-  
+
   const isModelSelectable = (modelId: string) => {
-    return isModelAvailable(modelId, isProPlan, apiKeys)
+    return isModelAvailable(modelId, isProPlan, apiKeys, customModels)
   }
 
   const handleModelChange = (modelId: string) => {
-    const selectedModel = getModelById(modelId)
+    const selectedModel = getModelById(modelId, customModels)
     if (!selectedModel) return
 
     // Check if model is available for the user
-    if (!isModelAvailable(modelId, isProPlan, apiKeys)) {
+    if (!isModelAvailable(modelId, isProPlan, apiKeys, customModels)) {
       if (showToast) {
         const provider = getProviderById(selectedModel.provider)
         toast.error(`Please add your ${provider?.name || selectedModel.provider} API key first`)
@@ -144,8 +147,8 @@ export function ModelSelector({
     }
   }
 
-  // Use the centralized grouping function
-  const getModelsByProvider = () => groupModelsByProvider()
+  // Use the centralized grouping function with custom models
+  const getModelsByProvider = () => groupModelsByProvider(customModels)
 
   return (
     <Select value={value} onValueChange={handleModelChange}>
@@ -176,10 +179,10 @@ export function ModelSelector({
               {group.models.map((model) => {
                 const provider = getProviderById(model.provider)
                 const isSelectable = isModelSelectable(model.id)
-                
+
                 const selectItem = (
-                  <SelectItem 
-                    key={model.id} 
+                  <SelectItem
+                    key={model.id}
                     value={model.id}
                     disabled={!isSelectable}
                     className={cn(
@@ -212,6 +215,11 @@ export function ModelSelector({
                         {model.features.isUnstable && (
                           <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0">
                             Unstable
+                          </span>
+                        )}
+                        {model.features.isCustom && (
+                          <span className="text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0">
+                            Custom
                           </span>
                         )}
                       </div>
