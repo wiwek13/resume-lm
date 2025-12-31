@@ -88,6 +88,7 @@ export const modifyWholeResumeTool = createTool({
       linkedin_url: z.string().optional(),
       github_url: z.string().optional(),
     }).optional(),
+    summary: z.string().optional(),
     work_experience: z.array(z.object({
       company: z.string(),
       position: z.string(),
@@ -122,7 +123,7 @@ export const modifyWholeResumeTool = createTool({
 
 
 
-  
+
 
 // Export all tools in a single object for convenience
 export const tools = {

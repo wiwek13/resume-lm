@@ -11,6 +11,8 @@ import { useState, useEffect, useCallback } from "react";
 import { generateResumeScore } from "@/utils/actions/resumes/actions";
 import { Resume, Job as JobType } from "@/lib/types";
 import { ApiKey } from "@/utils/ai-tools";
+import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
+import { getUserFacingError } from "@/lib/ai-error-handling";
 
 export interface ResumeScoreMetrics {
   overallScore: {
@@ -139,6 +141,8 @@ function updateStoredScores(resumeId: string, score: ResumeScoreMetrics) {
 
 export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps) {
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({ title: '', description: '' });
   const [scoreData, setScoreData] = useState<ResumeScoreMetrics | null>(() => {
     // Initialize with stored score if available
     return getStoredScores(resume.id);
@@ -183,6 +187,9 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
       updateStoredScores(resume.id, newScore as ResumeScoreMetrics);
     } catch (error) {
       console.error("Error generating score:", error);
+      const { title, description } = getUserFacingError(error);
+      setErrorMessage({ title, description });
+      setShowErrorDialog(true);
     } finally {
       setIsCalculating(false);
     }
@@ -377,6 +384,20 @@ export default function ResumeScorePanel({ resume, job }: ResumeScorePanelProps)
           </CardContent>
         </Card>
       ))}
+
+      <ApiErrorDialog
+        open={showErrorDialog}
+        onOpenChange={setShowErrorDialog}
+        errorMessage={errorMessage}
+        onUpgrade={() => {
+          setShowErrorDialog(false);
+          window.location.href = '/subscription';
+        }}
+        onSettings={() => {
+          setShowErrorDialog(false);
+          window.location.href = '/settings';
+        }}
+      />
     </div>
   );
 }

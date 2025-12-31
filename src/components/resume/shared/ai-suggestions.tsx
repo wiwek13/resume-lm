@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, CheckCheck, Sparkles, X } from "lucide-react";
 import Tiptap from "@/components/ui/tiptap";
 
 interface AISuggestion {
@@ -14,9 +14,10 @@ interface AISuggestionsProps {
   suggestions: AISuggestion[];
   onApprove: (suggestion: AISuggestion) => void;
   onDelete: (suggestionId: string) => void;
+  onApproveAll?: () => void;
 }
 
-export function AISuggestions({ suggestions, onApprove, onDelete }: AISuggestionsProps) {
+export function AISuggestions({ suggestions, onApprove, onDelete, onApproveAll }: AISuggestionsProps) {
   if (suggestions.length === 0) return null;
 
   return (
@@ -33,24 +34,48 @@ export function AISuggestions({ suggestions, onApprove, onDelete }: AISuggestion
     )}>
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8882_1px,transparent_1px),linear-gradient(to_bottom,#8882_1px,transparent_1px)] bg-[size:24px_24px] opacity-10" />
-      
+
       {/* Floating Gradient Orbs */}
       <div className="absolute -top-1/2 -right-1/2 w-full h-full rounded-full bg-gradient-to-br from-purple-200/20 to-indigo-200/20 blur-3xl animate-float opacity-70" />
       <div className="absolute -bottom-1/2 -left-1/2 w-full h-full rounded-full bg-gradient-to-br from-indigo-200/20 to-purple-200/20 blur-3xl animate-float-delayed opacity-70" />
-      
+
       {/* Content */}
       <div className="relative">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 rounded-lg bg-purple-100/80 text-purple-600">
-            <Sparkles className="h-4 w-4" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-purple-100/80 text-purple-600">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <span className="font-semibold text-purple-600">AI Suggestions</span>
+            <span className="text-xs text-purple-500">({suggestions.length} points)</span>
           </div>
-          <span className="font-semibold text-purple-600">AI Suggestions</span>
+
+          {/* Accept All Button */}
+          {onApproveAll && suggestions.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onApproveAll}
+              className={cn(
+                "text-xs font-medium",
+                "bg-green-100/80 hover:bg-green-200/80",
+                "text-green-700 hover:text-green-800",
+                "border-green-300/60 hover:border-green-400/60",
+                "shadow-sm hover:shadow-md",
+                "transition-all duration-300",
+                "hover:-translate-y-0.5"
+              )}
+            >
+              <CheckCheck className="h-4 w-4 mr-1.5" />
+              Accept All & Replace
+            </Button>
+          )}
         </div>
-        
+
         <div className="space-y-4">
           {suggestions.map((suggestion) => (
-            <div 
-              key={suggestion.id} 
+            <div
+              key={suggestion.id}
               className={cn(
                 "group/item relative",
                 "animate-in fade-in-50 duration-500",
@@ -61,7 +86,7 @@ export function AISuggestions({ suggestions, onApprove, onDelete }: AISuggestion
                 <div className="flex-1">
                   <Tiptap
                     content={suggestion.point}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     readOnly={true}
                     className={cn(
                       "min-h-[80px] text-sm",
@@ -118,4 +143,4 @@ export function AISuggestions({ suggestions, onApprove, onDelete }: AISuggestion
       </div>
     </div>
   );
-} 
+}  

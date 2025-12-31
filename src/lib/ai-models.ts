@@ -294,6 +294,81 @@ export const AI_MODELS: AIModel[] = [
       requiresPro: false
     }
   },
+  {
+    id: 'nex-agi/deepseek-v3.1-nex-n1:free',
+    name: 'DeepSeek V3.1 Nex N1 (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: true,
+      isUnstable: false,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
+  {
+    id: 'mistralai/devstral-2512:free',
+    name: 'Mistral Devstral (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: false,
+      isUnstable: false,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
+  {
+    id: 'nvidia/nemotron-nano-9b-v2:free',
+    name: 'Nvidia Nemotron Nano 9B (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: false,
+      isUnstable: false,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
+  {
+    id: 'z-ai/glm-4.5-air:free',
+    name: 'GLM 4.5 Air (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: false,
+      isUnstable: false,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
+  {
+    id: 'qwen/qwen3-4b:free',
+    name: 'Qwen3 4B (Free)',
+    provider: 'openrouter',
+    features: {
+      isFree: true,
+      isRecommended: false,
+      isUnstable: false,
+      supportsTools: true
+    },
+    availability: {
+      requiresApiKey: false,
+      requiresPro: false
+    }
+  },
 
   // Anthropic Models
   {
@@ -394,8 +469,8 @@ const MODEL_ALIASES: Record<string, string> = {
 // ========================
 
 export const DEFAULT_MODELS = {
-  PRO_USER: 'openai/gpt-oss-20b',
-  FREE_USER: 'openai/gpt-oss-20b'
+  PRO_USER: 'nex-agi/deepseek-v3.1-nex-n1:free',
+  FREE_USER: 'nex-agi/deepseek-v3.1-nex-n1:free'
 } as const
 
 // ========================
@@ -408,20 +483,20 @@ export const DEFAULT_MODELS = {
  */
 export const MODEL_DESIGNATIONS = {
   // Fast & cheap model for parsing, simple tasks, quick analysis
-  FAST_CHEAP: 'openai/gpt-oss-20b',
+  FAST_CHEAP: 'qwen/qwen3-4b:free',
   // Alternative fast & cheap option (free for all users)
-  FAST_CHEAP_FREE: 'openai/gpt-oss-20b',
+  FAST_CHEAP_FREE: 'qwen/qwen3-4b:free',
   // Frontier model for complex tasks, deep analysis, best quality
-  FRONTIER: 'openai/gpt-oss-20b',
+  FRONTIER: 'nex-agi/deepseek-v3.1-nex-n1:free',
   // Alternative frontier model
-  FRONTIER_ALT: 'openai/gpt-oss-20b',
+  FRONTIER_ALT: 'mistralai/devstral-2512:free',
   // Balanced model - good quality but faster/cheaper than frontier
-  BALANCED: 'openai/gpt-oss-20b',
+  BALANCED: 'z-ai/glm-4.5-air:free',
   // Vision-capable model for image analysis
-  VISION: 'openai/gpt-oss-20b',
+  VISION: 'google/gemini-2.0-flash-exp:free',
   // Default models by user type
-  DEFAULT_PRO: 'openai/gpt-oss-20b',
-  DEFAULT_FREE: 'openai/gpt-oss-20b'
+  DEFAULT_PRO: 'nex-agi/deepseek-v3.1-nex-n1:free',
+  DEFAULT_FREE: 'nex-agi/deepseek-v3.1-nex-n1:free'
 } as const
 
 // Type for model designations

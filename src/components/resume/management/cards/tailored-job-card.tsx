@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import {  MapPin, Clock, DollarSign, Briefcase, Trash2, Loader2, Plus, Sparkles, AlertCircle } from "lucide-react";
+import { MapPin, Clock, DollarSign, Briefcase, Trash2, Loader2, Plus, Sparkles, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Job, Resume } from "@/lib/types";
@@ -21,6 +21,7 @@ import { useResumeContext } from "../../editor/resume-editor-context";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { BriefcaseIcon } from "lucide-react";
 import { formatJobListing } from "@/utils/actions/jobs/ai";
+import { getUserFacingError } from "@/lib/ai-error-handling";
 
 interface TailoredJobCardProps {
   jobId: string | null;
@@ -29,10 +30,10 @@ interface TailoredJobCardProps {
   isLoading?: boolean;
 }
 
-export function TailoredJobCard({ 
-  jobId, 
+export function TailoredJobCard({
+  jobId,
   job: externalJob,
-  isLoading: externalIsLoading 
+  isLoading: externalIsLoading
 }: TailoredJobCardProps) {
   const router = useRouter();
   const { state, dispatch } = useResumeContext();
@@ -40,7 +41,7 @@ export function TailoredJobCard({
   // Only use internal state if external job is not provided
   const [internalJob, setInternalJob] = useState<Job | null>(null);
   const [internalIsLoading, setInternalIsLoading] = useState(true);
-  
+
   const effectiveJob = externalJob ?? internalJob;
   const effectiveIsLoading = externalIsLoading ?? internalIsLoading;
 
@@ -71,7 +72,7 @@ export function TailoredJobCard({
           setInternalJob(null);
           return;
         }
-        
+
         setInternalJob(jobData);
       } catch (error) {
         console.error('Error fetching job:', error);
@@ -155,26 +156,27 @@ export function TailoredJobCard({
 
       // Create job in database
       const newJob = await createJob(formattedJob);
-      
+
       // Update resume with new job ID using context
       dispatch({ type: 'UPDATE_FIELD', field: 'job_id', value: newJob.id });
-      
+
       // Save the changes to the database
       await updateResume(state.resume.id, {
         ...state.resume,
         job_id: newJob.id
       });
-      
+
       // Close dialog and refresh
       setCreateDialogOpen(false);
       router.refresh();
 
     } catch (error) {
       console.error('Error creating job:', error);
+      const { title, description, variant } = getUserFacingError(error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create job",
-        variant: "destructive",
+        title,
+        description,
+        variant,
       });
     } finally {
       setIsFormatting(false);
@@ -217,7 +219,7 @@ export function TailoredJobCard({
 
   // Enhanced error state with proper ARIA and animations
   const ErrorState = () => (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center p-8 space-y-4"
@@ -232,8 +234,8 @@ export function TailoredJobCard({
         <p className="text-sm text-red-600/90">
           This job listing is no longer available or there was an error loading it.
         </p>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => router.refresh()}
           className="mt-4 bg-white/80 border-red-200 hover:bg-red-50/80 hover:border-red-300 text-red-700"
         >
@@ -255,7 +257,7 @@ export function TailoredJobCard({
           <div className="p-4 rounded-2xl bg-gradient-to-br from-pink-500/5 to-rose-500/5 border border-pink-200/20 group-hover:scale-110 transition-transform duration-500">
             <Plus className="w-8 h-8 text-pink-500" />
           </div>
-          
+
           <div className="space-y-2">
             <h3 className="text-xl font-semibold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
               No Job Currently Linked
@@ -285,7 +287,7 @@ export function TailoredJobCard({
               </Button>
             </DialogTrigger>
 
-            <DialogContent 
+            <DialogContent
               className={cn(
                 "sm:max-w-[600px]",
                 "bg-gradient-to-b from-white/95 to-white/90",
@@ -312,8 +314,8 @@ export function TailoredJobCard({
                       "bg-white/80 backdrop-blur-sm",
                       "border transition-all duration-300",
                       "placeholder:text-gray-400",
-                      validationErrors.jobDescription 
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20" 
+                      validationErrors.jobDescription
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
                         : "border-gray-200 focus:border-pink-500 focus:ring-pink-500/20"
                     )}
                     aria-invalid={!!validationErrors.jobDescription}
@@ -435,7 +437,7 @@ export function TailoredJobCard({
                   </p>
                 </div>
               )}
-              
+
               {/* Keywords */}
               <div className="flex flex-wrap gap-2 ">
                 {effectiveJob.keywords?.map((keyword, index) => (
@@ -445,8 +447,8 @@ export function TailoredJobCard({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={cn(
                         "text-xs py-0.5",
                         "bg-gradient-to-r from-pink-50/50 to-rose-50/50",
@@ -493,7 +495,7 @@ export function TailoredJobAccordion({
 
   const handleDelete = async () => {
     if (!resume.job_id) return;
-    
+
     try {
       setIsDeleting(true);
       await deleteJob(resume.job_id);
@@ -529,7 +531,7 @@ export function TailoredJobAccordion({
       </div>
       <AccordionContent className=" ">
         <div className="">
-          <TailoredJobCard 
+          <TailoredJobCard
             jobId={resume.job_id || null}
             job={job}
             isLoading={isLoading}

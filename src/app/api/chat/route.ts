@@ -38,9 +38,9 @@ export async function POST(req: Request) {
         const message = error instanceof Error ? error.message : 'Rate limit exceeded';
         const match = message.match(/(\d+) seconds/);
         const retryAfter = match ? parseInt(match[1], 10) : 60;
-        
+
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: message, // Use validated message
             expirationTimestamp: Date.now() + retryAfter * 1000
           }),
@@ -60,33 +60,33 @@ export async function POST(req: Request) {
 
     // Some models (e.g., GPT-5 family / GPT-5 Mini) only support the default temperature (1)
     const requiresDefaultTemp = ['gpt-5-mini-2025-08-07', 'gpt-5', 'gpt-5.2', 'gpt-5.2-pro'].includes(config?.model ?? '');
-    
+
     // Gemini models support a thinking phase—explicitly disable it to avoid added latency/cost
     // For OpenRouter models, use the unified 'reasoning' parameter via providerOptions.openrouter
     const isGeminiModel = (config?.model ?? '').toLowerCase().includes('gemini-3');
     const isOpenRouterModel = (config?.model ?? '').includes('/');
-    
+
     // Configure provider options based on model type
-    type ProviderOptions = 
+    type ProviderOptions =
       | {
-          openrouter: {
-            reasoning: {
-              exclude: boolean;
-            };
+        openrouter: {
+          reasoning: {
+            exclude: boolean;
           };
-        }
+        };
+      }
       | {
-          google: {
-            thinkingConfig: {
-              thinkingBudget: number;
-              includeThoughts: boolean;
-            };
+        google: {
+          thinkingConfig: {
+            thinkingBudget: number;
+            includeThoughts: boolean;
           };
-        }
+        };
+      }
       | undefined;
-    
+
     let providerOptions: ProviderOptions = undefined;
-    
+
     if (isGeminiModel) {
       if (isOpenRouterModel) {
         // OpenRouter models: use reasoning parameter via providerOptions.openrouter
@@ -112,9 +112,9 @@ export async function POST(req: Request) {
     }
 
     // Use custom prompt if provided, otherwise fall back to default
-    const baseSystemPrompt = config?.customPrompts?.aiAssistant 
+    const baseSystemPrompt = config?.customPrompts?.aiAssistant
       ?? (AI_ASSISTANT_SYSTEM_MESSAGE.content as string);
-    
+
     // Append context-specific information to the system prompt
     const systemPrompt = `${baseSystemPrompt}
 
@@ -139,8 +139,10 @@ export async function POST(req: Request) {
          - Use 'getResume' with 'sections' array
          - Valid sections: 'all', 'personal_info', 'work_experience', 'education', 'skills', 'projects'
 
-      6. For multiple section updates:
-         - Use 'modifyWholeResume' when changing multiple sections at once
+      6. For multiple section updates or whole resume rewriting:
+         - Use 'modifyWholeResume' when the user asks to "rewrite my resume", "improve the whole thing", "change the tone", or modify multiple sections.
+         - You can also use this to update the 'summary' field.
+         - BE PROACTIVE: If the user asks for a general improvement, use this tool instead of just chatting.
 
       Aim to use a maximum of 5 tools in one go, then confirm with the user if they would like you to continue.
       The target role is ${target_role}. The job is ${job ? JSON.stringify(job) : 'No job specified'}.

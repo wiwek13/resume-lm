@@ -23,6 +23,7 @@ import Tiptap from "@/components/ui/tiptap";
 import { AIImprovementPrompt } from "../../shared/ai-improvement-prompt";
 import { AIGenerationSettingsTooltip } from "../components/ai-generation-tooltip";
 import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
+import { getUserFacingError } from "@/lib/ai-error-handling";
 
 interface AISuggestion {
   id: string;
@@ -113,7 +114,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
     const config = aiConfig[index] || { numPoints: 3, customPrompt: '' };
     setLoadingAI(prev => ({ ...prev, [index]: true }));
     setPopoverOpen(prev => ({ ...prev, [index]: false }));
-    
+
     try {
       // Get model and API key from local storage
       const MODEL_STORAGE_KEY = 'resumelm-default-model';
@@ -140,33 +141,19 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
           apiKeys
         }
       );
-      
+
       const suggestions = result.points.map((point: string) => ({
         id: Math.random().toString(36).substr(2, 9),
         point
       }));
-      
+
       setAiSuggestions(prev => ({
         ...prev,
         [index]: suggestions
       }));
-    } catch (error: Error | unknown) {
-      if (error instanceof Error && (
-          error.message.toLowerCase().includes('api key') || 
-          error.message.toLowerCase().includes('unauthorized') ||
-          error.message.toLowerCase().includes('invalid key') ||
-          error.message.toLowerCase().includes('invalid x-api-key'))
-      ) {
-        setErrorMessage({
-          title: "API Key Error",
-          description: "There was an issue with your API key. Please check your settings and try again."
-        });
-      } else {
-        setErrorMessage({
-          title: "Error",
-          description: "Failed to generate AI points. Please try again."
-        });
-      }
+    } catch (error: any) {
+      const { title, description } = getUserFacingError(error);
+      setErrorMessage({ title, description });
       setShowErrorDialog(true);
     } finally {
       setLoadingAI(prev => ({ ...prev, [index]: false }));
@@ -175,13 +162,31 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
 
   const approveSuggestion = (projectIndex: number, suggestion: AISuggestion) => {
     const updated = [...projects];
+    // Add to existing description
     updated[projectIndex].description = [...updated[projectIndex].description, suggestion.point];
     onChange(updated);
-    
+
     // Remove the suggestion after approval
     setAiSuggestions(prev => ({
       ...prev,
       [projectIndex]: prev[projectIndex].filter(s => s.id !== suggestion.id)
+    }));
+  };
+
+  // NEW: Accept all suggestions at once and REPLACE the description
+  const approveAllSuggestions = (projectIndex: number) => {
+    const suggestions = aiSuggestions[projectIndex];
+    if (!suggestions || suggestions.length === 0) return;
+
+    const updated = [...projects];
+    // REPLACE all descriptions with AI suggestions
+    updated[projectIndex].description = suggestions.map(s => s.point);
+    onChange(updated);
+
+    // Clear all suggestions for this project
+    setAiSuggestions(prev => ({
+      ...prev,
+      [projectIndex]: []
     }));
   };
 
@@ -196,12 +201,12 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
     const project = projects[projectIndex];
     const point = project.description[pointIndex];
     const customPrompt = improvementConfig[projectIndex]?.[pointIndex];
-    
+
     setLoadingPointAI(prev => ({
       ...prev,
       [projectIndex]: { ...(prev[projectIndex] || {}), [pointIndex]: true }
     }));
-    
+
     try {
       const MODEL_STORAGE_KEY = 'resumelm-default-model';
       const LOCAL_STORAGE_KEY = 'resumelm-api-keys';
@@ -235,23 +240,9 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
       const updated = [...projects];
       updated[projectIndex].description[pointIndex] = improvedPoint;
       onChange(updated);
-    } catch (error: unknown) {
-      if (error instanceof Error && (
-        error.message.toLowerCase().includes('api key') || 
-        error.message.toLowerCase().includes('unauthorized') ||
-        error.message.toLowerCase().includes('invalid key') ||
-        error.message.toLowerCase().includes('invalid x-api-key'))
-      ) {
-        setErrorMessage({
-          title: "API Key Error",
-          description: "There was an issue with your API key. Please check your settings and try again."
-        });
-      } else {
-        setErrorMessage({
-          title: "Error",
-          description: "Failed to improve point. Please try again."
-        });
-      }
+    } catch (error: any) {
+      const { title, description } = getUserFacingError(error);
+      setErrorMessage({ title, description });
       setShowErrorDialog(true);
     } finally {
       setLoadingPointAI(prev => ({
@@ -267,7 +258,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
       const updated = [...projects];
       updated[projectIndex].description[pointIndex] = improvedPoint.original;
       onChange(updated);
-      
+
       // Remove the improvement from state
       setImprovedPoints(prev => {
         const newState = { ...prev };
@@ -288,7 +279,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
 
     const updated = [...projects];
     const currentTechnologies = updated[projectIndex].technologies || [];
-    
+
     if (!currentTechnologies.includes(techToAdd)) {
       updated[projectIndex] = {
         ...updated[projectIndex],
@@ -321,8 +312,8 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
             "flex flex-col @[400px]:flex-row gap-2",
             "transition-all duration-300 ease-in-out"
           )}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={addProject}
               className={cn(
                 "flex-1 h-9 min-w-[120px]",
@@ -358,8 +349,8 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
         </div>
 
         {projects.map((project, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className={cn(
               "relative group transition-all duration-300",
               "bg-gradient-to-r from-violet-500/5 via-violet-500/10 to-purple-500/5",
@@ -372,7 +363,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                 <GripVertical className="h-4 w-4 text-violet-600" />
               </div>
             </div>
-            
+
             <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
               {/* Header with Delete Button */}
               <div className="space-y-2 sm:space-y-3">
@@ -395,8 +386,8 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                       PROJECT NAME
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={() => removeProject(index)}
                     className="text-gray-400 hover:text-red-500 transition-colors duration-300"
@@ -469,7 +460,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                       <div key={descIndex} className="flex gap-1 items-start group/item">
                         <div className="flex-1">
                           <Tiptap
-                            content={desc} 
+                            content={desc}
                             onChange={(newContent) => {
                               const updated = [...projects];
                               updated[index].description[descIndex] = newContent;
@@ -604,8 +595,8 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                                       )}
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent 
-                                    side="bottom" 
+                                  <TooltipContent
+                                    side="bottom"
                                     align="start"
                                     sideOffset={2}
                                     className={cn(
@@ -642,6 +633,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                       suggestions={aiSuggestions[index] || []}
                       onApprove={(suggestion) => approveSuggestion(index, suggestion)}
                       onDelete={(suggestionId) => deleteSuggestion(index, suggestionId)}
+                      onApproveAll={() => approveAllSuggestions(index)}
                     />
 
                     {project.description.length === 0 && !aiSuggestions[index]?.length && (
@@ -669,7 +661,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                       Add Point
                     </Button>
 
-                    
+
                     <AIGenerationSettingsTooltip
                       index={index}
                       loadingAI={loadingAI[index]}
@@ -703,7 +695,7 @@ export const ProjectsForm = memo(function ProjectsFormComponent({
                   <Label className="text-[10px] sm:text-xs font-medium text-violet-700">
                     Technologies & Tools Used
                   </Label>
-                  
+
                   <div className="space-y-2">
                     {/* Technologies Display */}
                     <div className="flex flex-wrap gap-1.5">

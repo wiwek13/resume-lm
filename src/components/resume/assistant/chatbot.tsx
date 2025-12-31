@@ -4,7 +4,7 @@
 import React, { useCallback, useState } from 'react';
 import { useChat } from 'ai/react';
 import { Card } from "@/components/ui/card";
-import { Bot, Trash2, Pencil, ChevronDown, RefreshCw } from "lucide-react";
+import { Bot, Trash2, Pencil, ChevronDown, RefreshCw, Sparkles } from "lucide-react";
 import { Education, Project, Resume, Skill, WorkExperience, Job } from '@/lib/types';
 import { Message } from 'ai';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,8 @@ interface ChatBotProps {
   resume: Resume;
   onResumeChange: (field: keyof Resume, value: Resume[typeof field]) => void;
   job?: Job | null;
+  externalMessage?: string | null;
+  onExternalMessageSent?: () => void;
 }
 
 function ScrollToBottom() {
@@ -65,15 +67,15 @@ function ScrollToBottom() {
   );
 }
 
-export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
+export default function ChatBot({ resume, onResumeChange, job, externalMessage, onExternalMessageSent }: ChatBotProps) {
   const router = useRouter();
   const [accordionValue, setAccordionValue] = React.useState<string>("");
-  
+
   // Use synchronized hooks for instant updates when settings change
   const { apiKeys } = useApiKeys();
   const { defaultModel } = useDefaultModel();
   const { customPrompts } = useCustomPrompts();
-  
+
   const [originalResume, setOriginalResume] = React.useState<Resume | null>(null);
   const [isInitialLoading, setIsInitialLoading] = React.useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -85,7 +87,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
     apiKeys,
     customPrompts: Object.keys(customPrompts).length > 0 ? customPrompts : undefined,
   };
-  
+
   const { messages, error, append, isLoading, addToolResult, stop, setMessages } = useChat({
     api: '/api/chat',
     body: {
@@ -96,7 +98,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
     },
     maxSteps: 5,
     onResponse() {
- 
+
       setIsInitialLoading(false);
     },
     onError() {
@@ -104,10 +106,10 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
     },
     async onToolCall({ toolCall }) {
       // setIsStreaming(false);
-      
+
       if (toolCall.toolName === 'getResume') {
         const params = toolCall.args as { sections: string[] };
-        
+
         const personalInfo = {
           first_name: resume.first_name,
           last_name: resume.last_name,
@@ -130,10 +132,10 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
         const result = params.sections.includes('all')
           ? { ...sectionMap, target_role: resume.target_role }
           : params.sections.reduce((acc, section) => ({
-              ...acc,
-              [section]: sectionMap[section as keyof typeof sectionMap]
-            }), {});
-        
+            ...acc,
+            [section]: sectionMap[section as keyof typeof sectionMap]
+          }), {});
+
         addToolResult({ toolCallId: toolCall.toolCallId, result });
         console.log('Tool call READ RESUME result:', result);
         return result;
@@ -167,15 +169,16 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
             linkedin_url: string;
             github_url: string;
           }>;
+          summary?: string;
           work_experience?: WorkExperience[];
           education?: Education[];
           skills?: Skill[];
           projects?: Project[];
         };
-        
+
         // Store the current resume state before applying updates
         setOriginalResume({ ...resume });
-        
+
         // Apply updates as before
         if (updates.basic_info) {
           Object.entries(updates.basic_info).forEach(([key, value]) => {
@@ -198,6 +201,10 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
           }
         });
 
+        if (updates.summary) {
+          onResumeChange('summary', updates.summary);
+        }
+
         // Add a simple, serializable result for the tool call
         const result = { success: true };
         addToolResult({ toolCallId: toolCall.toolCallId, result });
@@ -214,17 +221,25 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
 
   // Memoize the submit handler
   const handleSubmit = useCallback((message: string) => {
-  
-    
+
+
     setIsInitialLoading(true);
-    append({ 
+    append({
       content: message.replace(/\s+$/, ''), // Extra safety: trim trailing whitespace
-      role: 'user' 
+      role: 'user'
     });
-    
-    
+
+
     setAccordionValue("chat");
   }, [append]);
+
+  // Handle external messages (e.g., from Human Score dialog)
+  React.useEffect(() => {
+    if (externalMessage) {
+      handleSubmit(externalMessage);
+      onExternalMessageSent?.();
+    }
+  }, [externalMessage, handleSubmit, onExternalMessageSent]);
 
   // Add delete handler
   const handleDelete = (id: string) => {
@@ -239,8 +254,8 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
 
   // Add save handler
   const handleSaveEdit = (id: string) => {
-    setMessages(messages.map(message => 
-      message.id === id 
+    setMessages(messages.map(message =>
+      message.id === id
         ? { ...message, content: editContent }
         : message
     ));
@@ -257,7 +272,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
 
   return (
     <Card className={cn(
-      "flex flex-col w-full l mx-auto",
+      "flex flex-col w-full mx-auto",
       "bg-gradient-to-br from-purple-400/20 via-purple-400/50 to-indigo-400/50",
       "border-2 border-purple-200/60",
       "shadow-lg shadow-purple-500/5",
@@ -267,7 +282,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
       "relative",
       "data-[state=closed]:shadow-md data-[state=closed]:border data-[state=closed]:border-purple-200/40 "
     )}>
-      
+
 
       <Accordion
         type="single"
@@ -324,8 +339,8 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                     "disabled:opacity-50",
                     "flex items-center gap-2",
                     (accordionValue !== "chat" || isAlertOpen) && "hidden",
-                    
-                
+
+
                   )}
                   disabled={messages.length === 0}
                   aria-label="Clear chat history"
@@ -410,7 +425,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                                       className={cn(
                                         "w-full min-h-[100px] p-2 rounded-lg",
                                         "bg-white/80 backdrop-blur-sm",
-                                        m.role === 'user' 
+                                        m.role === 'user'
                                           ? "text-purple-900 placeholder-purple-400"
                                           : "text-gray-900 placeholder-gray-400",
                                         "border border-purple-200/60 focus:border-purple-400/60",
@@ -439,7 +454,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                                     onClick={() => handleDelete(m.id)}
                                     className={cn(
                                       "transition-colors duration-200",
-                                      m.role === 'user' 
+                                      m.role === 'user'
                                         ? "text-purple-500/60 hover:text-purple-600"
                                         : "text-purple-400/60 hover:text-purple-500",
                                     )}
@@ -451,7 +466,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                                     onClick={() => handleEdit(m.id, m.content)}
                                     className={cn(
                                       "transition-colors duration-200",
-                                      m.role === 'user' 
+                                      m.role === 'user'
                                         ? "text-purple-500/60 hover:text-purple-600"
                                         : "text-purple-400/60 hover:text-purple-500",
                                     )}
@@ -464,7 +479,7 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Tool Invocations as Separate Bubbles */}
                         {m.toolInvocations?.map((toolInvocation: ToolInvocation) => {
                           const { toolName, toolCallId, state, args } = toolInvocation;
@@ -576,12 +591,12 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                                       type={config.type}
                                       content={args[config.content]}
                                       currentContent={resume[config.field][args.index]}
-                                      onAccept={() => onResumeChange(config.field, 
-                                        resume[config.field].map((item: WorkExperience | Education | Project | Skill, i: number) => 
+                                      onAccept={() => onResumeChange(config.field,
+                                        resume[config.field].map((item: WorkExperience | Education | Project | Skill, i: number) =>
                                           i === args.index ? args[config.content] : item
                                         )
                                       )}
-                                      onReject={() => {}}
+                                      onReject={() => { }}
                                     />
                                   </div>
                                 </div>
@@ -596,25 +611,25 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                         {/* Loading Dots Message - Modified condition */}
                         {((isInitialLoading && index === messages.length - 1 && m.role === 'user') ||
                           (isLoading && index === messages.length - 1 && m.role === 'assistant')) && (
-                          <div className="mt-2">
-                            <div className="flex justify-start">
-                              <div className={cn(
-                                "rounded-2xl px-4 py-2.5 min-w-[60px]",
-                                "bg-white/60",
-                                "border border-purple-200/60",
-                                "shadow-sm",
-                                "backdrop-blur-sm"
-                              )}>
-                                <LoadingDots className="text-purple-600" />
+                            <div className="mt-2">
+                              <div className="flex justify-start">
+                                <div className={cn(
+                                  "rounded-2xl px-4 py-2.5 min-w-[60px]",
+                                  "bg-white/60",
+                                  "border border-purple-200/60",
+                                  "shadow-sm",
+                                  "backdrop-blur-sm"
+                                )}>
+                                  <LoadingDots className="text-purple-600" />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </React.Fragment>
                     ))}
                   </>
                 )}
-              
+
                 {error && (
                   error.message === "Rate limit exceeded. Try again later." ? (
                     <div className={cn(
@@ -628,9 +643,9 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
                       </p>
                     </div>
                   ) : (
-                    <ApiKeyErrorAlert 
-                      error={error} 
-                      router={router} 
+                    <ApiKeyErrorAlert
+                      error={error}
+                      router={router}
                     />
                   )
                 )}
@@ -638,10 +653,21 @@ export default function ChatBot({ resume, onResumeChange, job }: ChatBotProps) {
 
               <ScrollToBottom />
             </StickToBottom>
-            
+
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      <div className="absolute top-2 right-12 z-20">
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-white/80 backdrop-blur-sm shadow-sm text-xs h-7 border-purple-200 text-purple-700 hover:bg-purple-50"
+          onClick={() => handleSubmit("Please review my entire resume and suggest improvements to make it sound more professional and impactful. Use the modifyWholeResume tool to apply changes.")}
+        >
+          <Sparkles className="h-3 w-3 mr-1.5" />
+          Improve Resume
+        </Button>
+      </div>
 
       {/* Input Bar */}
       <ChatInput

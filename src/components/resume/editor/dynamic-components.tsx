@@ -29,6 +29,9 @@ interface SkillsFormProps {
   skills: Skill[];
   onChange: (skills: Skill[]) => void;
   profile: { skills: Skill[] };
+  jobKeywords?: string[];
+  targetRole?: string;
+  jobDescription?: string;
 }
 
 export const WorkExperienceForm = dynamic(
@@ -65,11 +68,11 @@ export const ProjectsForm = dynamic(
 
 
 export const DocumentSettingsForm = dynamic(
-  () => import('./forms/document-settings-form').then(mod => ({ 
-    default: mod.DocumentSettingsForm 
-  })) as Promise<ComponentType<{ 
-    documentSettings: DocumentSettings; 
-    onChange: (field: 'document_settings', value: DocumentSettings) => void 
+  () => import('./forms/document-settings-form').then(mod => ({
+    default: mod.DocumentSettingsForm
+  })) as Promise<ComponentType<{
+    documentSettings: DocumentSettings;
+    onChange: (field: 'document_settings', value: DocumentSettings) => void
   }>>,
   {
     loading: () => <LoadingFallback lines={1} />,

@@ -24,6 +24,7 @@ interface SectionOrderFormProps {
     sectionOrder: string[];
     sectionConfigs: Resume['section_configs'];
     documentSettings?: DocumentSettings;
+    customSections?: Array<{ id: string; title: string; items: string[] }>;
     onChange: (field: keyof Resume, value: Resume[keyof Resume]) => void;
 }
 
@@ -34,12 +35,20 @@ const SECTION_LABELS: Record<string, string> = {
     education: 'Education',
 };
 
+// Get label for any section (built-in or custom)
+const getSectionLabel = (sectionKey: string, customSections?: Array<{ id: string; title: string }>) => {
+    if (SECTION_LABELS[sectionKey]) return SECTION_LABELS[sectionKey];
+    const custom = customSections?.find(s => s.id === sectionKey);
+    return custom?.title || sectionKey;
+};
+
 const DEFAULT_SECTIONS = ['work_experience', 'education', 'skills', 'projects'];
 
 export function SectionOrderForm({
     sectionOrder,
     sectionConfigs,
     documentSettings,
+    customSections,
     onChange
 }: SectionOrderFormProps) {
     const [presets, setPresets] = useState<StylePreset[]>([]);
@@ -215,8 +224,11 @@ export function SectionOrderForm({
                         </div>
 
                         {/* Section name */}
-                        <div className="flex-1 font-medium">
-                            {SECTION_LABELS[sectionKey] || sectionKey}
+                        <div className="flex-1 font-medium flex items-center gap-2">
+                            {getSectionLabel(sectionKey, customSections)}
+                            {sectionKey.startsWith('custom-') && (
+                                <span className="text-xs px-1.5 py-0.5 bg-violet-100 text-violet-600 rounded">Custom</span>
+                            )}
                         </div>
 
                         {/* Move buttons */}

@@ -7,6 +7,7 @@ import { ChevronUp, ChevronDown } from "lucide-react"
 import { Switch } from "@/components/ui/switch";
 import { SavedStylesDialog } from "./saved-styles-dialog";
 import { LayoutTemplate } from "lucide-react";
+import { TemplateSelector } from "./template-selector";
 
 interface DocumentSettingsFormProps {
   // resume: Resume;
@@ -132,7 +133,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               min={0}
               max={48}
               step={1}
-              onChange={(value) => 
+              onChange={(value) =>
                 handleSettingsChange({
                   ...documentSettings,
                   [`${section}_margin_top`]: value
@@ -147,7 +148,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
           min={0}
           max={48}
           step={1}
-          onValueChange={([value]) => 
+          onValueChange={([value]) =>
             handleSettingsChange({
               ...documentSettings,
               [`${section}_margin_top`]: value
@@ -165,7 +166,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               min={0}
               max={48}
               step={1}
-              onChange={(value) => 
+              onChange={(value) =>
                 handleSettingsChange({
                   ...documentSettings,
                   [`${section}_margin_bottom`]: value
@@ -180,7 +181,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
           min={0}
           max={48}
           step={1}
-          onValueChange={([value]) => 
+          onValueChange={([value]) =>
             handleSettingsChange({
               ...documentSettings,
               [`${section}_margin_bottom`]: value
@@ -198,7 +199,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               min={0}
               max={72}
               step={2}
-              onChange={(value) => 
+              onChange={(value) =>
                 handleSettingsChange({
                   ...documentSettings,
                   [`${section}_margin_horizontal`]: value
@@ -213,7 +214,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
           min={0}
           max={72}
           step={2}
-          onValueChange={([value]) => 
+          onValueChange={([value]) =>
             handleSettingsChange({
               ...documentSettings,
               [`${section}_margin_horizontal`]: value
@@ -231,7 +232,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               min={0}
               max={16}
               step={0.5}
-              onChange={(value) => 
+              onChange={(value) =>
                 handleSettingsChange({
                   ...documentSettings,
                   [`${section}_item_spacing`]: value
@@ -246,7 +247,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
           min={0}
           max={16}
           step={0.5}
-          onValueChange={([value]) => 
+          onValueChange={([value]) =>
             handleSettingsChange({
               ...documentSettings,
               [`${section}_item_spacing`]: value
@@ -259,7 +260,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
 
   return (
     <div className="">
-        <Card className="">
+      <Card className="">
 
         {/* Buttons */}
         <CardHeader className="flex flex-col space-y-4">
@@ -269,12 +270,12 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               onApplyStyle={(settings) => handleSettingsChange(settings)}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 pt-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleSettingsChange({...defaultSettings})}
+              onClick={() => handleSettingsChange({ ...defaultSettings })}
               className="relative h-60 group p-0 overflow-hidden border-slate-200 hover:border-teal-600/40 transition-colors"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-50/50 to-cyan-50/50 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -292,7 +293,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       <div className="w-1/3 h-1 bg-slate-300 rounded" />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="w-1/3 h-1.5 bg-slate-300 rounded" />
@@ -302,7 +303,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         <div className="w-10/12 h-1 bg-slate-300 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="w-1/3 h-1.5 bg-slate-300 rounded" />
                       <div className="space-y-1.5">
@@ -311,7 +312,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         <div className="w-10/12 h-1 bg-slate-300 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="w-1/3 h-1.5 bg-slate-300 rounded" />
                       <div className="space-y-1.5">
@@ -373,7 +374,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       <div className="w-1/4 h-1 bg-slate-300 rounded" />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <div className="w-1/4 h-1.5 bg-slate-300 rounded" />
@@ -383,7 +384,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         <div className="w-10/12 h-1 bg-slate-300 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-1">
                       <div className="w-1/4 h-1.5 bg-slate-300 rounded" />
                       <div className="space-y-1">
@@ -393,7 +394,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         <div className="w-9/12 h-1 bg-slate-300 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-1">
                       <div className="w-1/4 h-1.5 bg-slate-300 rounded" />
                       <div className="space-y-1">
@@ -402,7 +403,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         <div className="w-9/12 h-1 bg-slate-300 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-1">
                       <div className="w-1/4 h-1.5 bg-slate-300 rounded" />
                       <div className="space-y-1">
@@ -444,7 +445,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
               <p className="text-xs text-muted-foreground/60 mt-2">
                 By enabling this footer, I confirm that I am a UBC Faculty of Science Co-op student and acknowledge that I am responsible for ensuring appropriate use of UBC branding in my resume.
               </p>
-              
+
               {/* Footer Width Control - Only shown when footer is enabled */}
               {documentSettings?.show_ubc_footer && (
                 <div className="space-y-2 mt-4 pt-4 border-t border-slate-200/50">
@@ -456,7 +457,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                         min={50}
                         max={100}
                         step={1}
-                        onChange={(value) => 
+                        onChange={(value) =>
                           handleSettingsChange({
                             ...documentSettings,
                             footer_width: value
@@ -471,7 +472,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                     min={50}
                     max={100}
                     step={1}
-                    onValueChange={([value]) => 
+                    onValueChange={([value]) =>
                       handleSettingsChange({
                         ...documentSettings,
                         footer_width: value
@@ -485,6 +486,22 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Template Selection */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">Resume Template</Label>
+              <div className="h-[1px] flex-1 mx-4 bg-gradient-to-r from-teal-200/20 via-cyan-200/20 to-transparent" />
+            </div>
+
+            <TemplateSelector
+              value={documentSettings.template || 'modern'}
+              onChange={(value) => handleSettingsChange({
+                ...documentSettings,
+                template: value
+              })}
+            />
           </div>
 
           {/* Global Document Settings */}
@@ -514,7 +531,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={8}
                   max={12}
                   step={0.5}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       document_font_size: value
@@ -532,7 +549,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       min={1}
                       max={2}
                       step={0.1}
-                      onChange={(value) => 
+                      onChange={(value) =>
                         handleSettingsChange({
                           ...documentSettings,
                           document_line_height: value
@@ -547,7 +564,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={1}
                   max={2}
                   step={0.1}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       document_line_height: value
@@ -565,7 +582,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       min={18}
                       max={108}
                       step={2}
-                      onChange={(value) => 
+                      onChange={(value) =>
                         handleSettingsChange({
                           ...documentSettings,
                           document_margin_vertical: value
@@ -580,7 +597,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={18}
                   max={108}
                   step={2}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       document_margin_vertical: value
@@ -598,7 +615,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       min={18}
                       max={108}
                       step={2}
-                      onChange={(value) => 
+                      onChange={(value) =>
                         handleSettingsChange({
                           ...documentSettings,
                           document_margin_horizontal: value
@@ -613,7 +630,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={18}
                   max={108}
                   step={2}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       document_margin_horizontal: value
@@ -641,7 +658,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       min={0}
                       max={40}
                       step={1}
-                      onChange={(value) => 
+                      onChange={(value) =>
                         handleSettingsChange({
                           ...documentSettings,
                           header_name_size: value
@@ -656,7 +673,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={0}
                   max={40}
                   step={1}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       header_name_size: value
@@ -674,7 +691,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                       min={0}
                       max={50}
                       step={1}
-                      onChange={(value) => 
+                      onChange={(value) =>
                         handleSettingsChange({
                           ...documentSettings,
                           header_name_bottom_spacing: value
@@ -689,7 +706,7 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
                   min={0}
                   max={50}
                   step={1}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     handleSettingsChange({
                       ...documentSettings,
                       header_name_bottom_spacing: value
@@ -741,6 +758,6 @@ export function DocumentSettingsForm({ documentSettings, onChange }: DocumentSet
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 } 

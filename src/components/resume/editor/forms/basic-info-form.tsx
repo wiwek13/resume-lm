@@ -3,7 +3,8 @@
 import { Profile, Resume } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, User, UserCircle2, LucideIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Mail, Phone, MapPin, Globe, Linkedin, Github, User, UserCircle2, LucideIcon, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResumeContext } from '../resume-editor-context';
 import { memo, useCallback } from 'react';
@@ -20,10 +21,10 @@ function areBasicInfoPropsEqual(
 }
 
 // Create memoized field component
-const BasicInfoField = memo(function BasicInfoField({ 
-  field, 
-  value, 
-  label, 
+const BasicInfoField = memo(function BasicInfoField({
+  field,
+  value,
+  label,
   icon: Icon,
   placeholder,
   type = 'text'
@@ -36,7 +37,7 @@ const BasicInfoField = memo(function BasicInfoField({
   type?: string;
 }) {
   const { dispatch } = useResumeContext();
-  
+
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch({ type: 'UPDATE_FIELD', field, value: e.target.value });
   }, [dispatch, field]);
@@ -77,7 +78,7 @@ export const BasicInfoForm = memo(function BasicInfoFormComponent({
 
   const handleFillFromProfile = () => {
     if (!profile) return;
-    
+
     // List of fields to copy from profile
     const fieldsToFill: (keyof Profile)[] = [
       'first_name',
@@ -131,6 +132,26 @@ export const BasicInfoForm = memo(function BasicInfoFormComponent({
                 icon={User}
                 placeholder="Last Name"
               />
+            </div>
+
+            <div className="relative group">
+              <div className="absolute right-2.5 top-3">
+                <div className="p-1 rounded-full bg-teal-100/80">
+                  <FileText className="h-3.5 w-3.5 text-teal-600" />
+                </div>
+              </div>
+              <Textarea
+                value={resume.summary || ''}
+                onChange={(e) => updateField('summary', e.target.value)}
+                className="min-h-[100px] text-sm bg-white/50 border-gray-200 rounded-lg
+                   focus:border-teal-500/40 focus:ring-2 focus:ring-teal-500/20
+                   hover:border-teal-500/30 hover:bg-white/60 transition-colors
+                   placeholder:text-gray-400 resize-y"
+                placeholder="Professional Summary (e.g. Experienced software engineer with...)"
+              />
+              <div className="absolute -top-2 left-2 px-1 bg-white/80 text-[9px] font-medium text-teal-700">
+                PROFESSIONAL SUMMARY
+              </div>
             </div>
 
             <BasicInfoField

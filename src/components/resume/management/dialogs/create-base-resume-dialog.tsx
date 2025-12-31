@@ -19,6 +19,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Textarea } from "@/components/ui/textarea";
 import { convertTextToResume } from "@/utils/actions/resumes/ai";
 import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
+import { getUserFacingError } from "@/lib/ai-error-handling";
 
 interface CreateBaseResumeDialogProps {
   children: React.ReactNode;
@@ -67,7 +68,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
           return '';
       }
     })();
-    
+
     // Add index to ensure uniqueness
     return index !== undefined ? `${baseId}-${index}` : baseId;
   };
@@ -84,7 +85,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
   const handleSectionSelection = (section: keyof typeof selectedItems, checked: boolean) => {
     setSelectedItems(prev => ({
       ...prev,
-      [section]: checked 
+      [section]: checked
         ? profile[section].map((item, index) => getItemId(section, item, index))
         : []
     }));
@@ -176,7 +177,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
             model: selectedModel || '',
             apiKeys
           });
-          
+
           // Extract content sections and basic info for createBaseResume
           const selectedContent = {
             // Basic Info
@@ -188,20 +189,20 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
             website: convertedResume.website,
             linkedin_url: convertedResume.linkedin_url,
             github_url: convertedResume.github_url,
-            
+
             // Content Sections
             work_experience: convertedResume.work_experience || [],
             education: convertedResume.education || [],
             skills: convertedResume.skills || [],
             projects: convertedResume.projects || [],
           };
-          
+
           const resume = await createBaseResume(
             targetRole,
             'import-resume',
             selectedContent as Resume
           );
-          
+
           toast({
             title: "Success",
             description: "Resume created successfully",
@@ -210,23 +211,10 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
           router.push(`/resumes/${resume.id}`);
           setOpen(false);
           return;
-        } catch (error: Error | unknown) {
-          if (error instanceof Error && (
-            error.message.toLowerCase().includes('api key') || 
-            error.message.toLowerCase().includes('unauthorized') ||
-            error.message.toLowerCase().includes('invalid key') ||
-            error.message.toLowerCase().includes('invalid x-api-key')
-          )) {
-            setErrorMessage({
-              title: "API Key Error",
-              description: "There was an issue with your API key. Please check your settings and try again."
-            });
-          } else {
-            setErrorMessage({
-              title: "Error",
-              description: "Failed to convert resume text. Please try again."
-            });
-          }
+          return;
+        } catch (error: any) {
+          const { title, description } = getUserFacingError(error);
+          setErrorMessage({ title, description });
           setShowErrorDialog(true);
           setIsCreating(false);
           return;
@@ -234,23 +222,23 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
       }
 
       const selectedContent = {
-        work_experience: profile.work_experience.filter((exp, index) => 
+        work_experience: profile.work_experience.filter((exp, index) =>
           selectedItems.work_experience.includes(getItemId('work_experience', exp, index))
         ),
-        education: profile.education.filter((edu, index) => 
+        education: profile.education.filter((edu, index) =>
           selectedItems.education.includes(getItemId('education', edu, index))
         ),
-        skills: profile.skills.filter((skill, index) => 
+        skills: profile.skills.filter((skill, index) =>
           selectedItems.skills.includes(getItemId('skills', skill, index))
         ),
-        projects: profile.projects.filter((project, index) => 
+        projects: profile.projects.filter((project, index) =>
           selectedItems.projects.includes(getItemId('projects', project, index))
         ),
       };
 
 
       const resume = await createBaseResume(
-        targetRole, 
+        targetRole,
         importOption === 'scratch' ? 'fresh' : importOption,
         selectedContent
       );
@@ -377,7 +365,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
             animation: shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
           }
         `}</style>
-        
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
@@ -389,7 +377,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
                 Create Base Resume
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
-                {currentStep === 1 
+                {currentStep === 1
                   ? "Start by entering your target role"
                   : "Configure your resume content"
                 }
@@ -425,7 +413,7 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
                 <h3 className="text-xl font-semibold text-gray-900">What role are you targeting?</h3>
                 <p className="text-gray-600">This helps us tailor your resume content and format</p>
               </div>
-              
+
               <div className="space-y-4 max-w-md mx-auto">
                 <div className="space-y-2">
                   <Label htmlFor="target-role" className="text-sm font-medium text-gray-900">
@@ -450,15 +438,15 @@ export function CreateBaseResumeDialog({ children, profile }: CreateBaseResumeDi
                     autoFocus
                   />
                 </div>
-                
-                                 <div className="text-xs text-gray-500 space-y-1">
-                   <p>💡 <strong>Tips for better results:</strong></p>
-                   <ul className="list-disc list-inside space-y-0.5 ml-4">
-                     <li>Be specific (e.g., &ldquo;Frontend Developer&rdquo; vs &ldquo;Developer&rdquo;)</li>
-                     <li>Include seniority level if relevant</li>
-                     <li>Match the job posting language when possible</li>
-                   </ul>
-                 </div>
+
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p>💡 <strong>Tips for better results:</strong></p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-4">
+                    <li>Be specific (e.g., &ldquo;Frontend Developer&rdquo; vs &ldquo;Developer&rdquo;)</li>
+                    <li>Include seniority level if relevant</li>
+                    <li>Match the job posting language when possible</li>
+                  </ul>
+                </div>
               </div>
             </div>
           )}

@@ -9,6 +9,7 @@ import { Plus, Trash2, GripVertical, Check, X, Loader2, Sparkles } from "lucide-
 import { cn } from "@/lib/utils";
 import { ImportFromProfileDialog } from "../../management/dialogs/import-from-profile-dialog";
 import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
+import { getUserFacingError } from "@/lib/ai-error-handling";
 
 import { useState, useRef, useEffect, memo } from "react";
 import {
@@ -58,11 +59,11 @@ function areWorkExperiencePropsEqual(
 }
 
 // Export the memoized component
-export const WorkExperienceForm = memo(function WorkExperienceFormComponent({ 
-  experiences, 
-  onChange, 
-  profile, 
-  targetRole = "Software Engineer" 
+export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
+  experiences,
+  onChange,
+  profile,
+  targetRole = "Software Engineer"
 }: WorkExperienceFormProps) {
   const [aiSuggestions, setAiSuggestions] = useState<{ [key: number]: AISuggestion[] }>({});
   const [loadingAI, setLoadingAI] = useState<{ [key: number]: boolean }>({});
@@ -117,7 +118,7 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
     const config = aiConfig[index] || { numPoints: 3, customPrompt: '' };
     setLoadingAI(prev => ({ ...prev, [index]: true }));
     setPopoverOpen(prev => ({ ...prev, [index]: false }));
-    
+
     try {
       // Get model and API key from local storage
       const MODEL_STORAGE_KEY = 'resumelm-default-model';
@@ -143,35 +144,22 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
         {
           model: selectedModel || '',
           apiKeys
-        }
+        },
+        exp.description || [] // Pass existing points as context
       );
-      
+
       const suggestions = result.points.map((point: string) => ({
         id: Math.random().toString(36).substr(2, 9),
         point
       }));
-      
+
       setAiSuggestions(prev => ({
         ...prev,
         [index]: suggestions
       }));
-    } catch (error: Error | unknown) {
-      if (error instanceof Error && (
-          error.message.toLowerCase().includes('api key') || 
-          error.message.toLowerCase().includes('unauthorized') ||
-          error.message.toLowerCase().includes('invalid key') ||
-          error.message.toLowerCase().includes('invalid x-api-key'))
-      ) {
-        setErrorMessage({
-          title: "API Key Error",
-          description: "There was an issue with your API key. Please check your settings and try again."
-        });
-      } else {
-        setErrorMessage({
-          title: "Error",
-          description: "Failed to generate AI points. Please try again."
-        });
-      }
+    } catch (error: any) {
+      const { title, description } = getUserFacingError(error);
+      setErrorMessage({ title, description });
       setShowErrorDialog(true);
     } finally {
       setLoadingAI(prev => ({ ...prev, [index]: false }));
@@ -180,13 +168,31 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
 
   const approveSuggestion = (expIndex: number, suggestion: AISuggestion) => {
     const updated = [...experiences];
+    // REPLACE: Add to existing description (not replacing all)
     updated[expIndex].description = [...updated[expIndex].description, suggestion.point];
     onChange(updated);
-    
+
     // Remove the suggestion after approval
     setAiSuggestions(prev => ({
       ...prev,
       [expIndex]: prev[expIndex].filter(s => s.id !== suggestion.id)
+    }));
+  };
+
+  // NEW: Accept all suggestions at once and REPLACE the description
+  const approveAllSuggestions = (expIndex: number) => {
+    const suggestions = aiSuggestions[expIndex];
+    if (!suggestions || suggestions.length === 0) return;
+
+    const updated = [...experiences];
+    // REPLACE all descriptions with AI suggestions
+    updated[expIndex].description = suggestions.map(s => s.point);
+    onChange(updated);
+
+    // Clear all suggestions for this experience
+    setAiSuggestions(prev => ({
+      ...prev,
+      [expIndex]: []
     }));
   };
 
@@ -201,12 +207,12 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
     const exp = experiences[expIndex];
     const point = exp.description[pointIndex];
     const customPrompt = improvementConfig[expIndex]?.[pointIndex];
-    
+
     setLoadingPointAI(prev => ({
       ...prev,
       [expIndex]: { ...(prev[expIndex] || {}), [pointIndex]: true }
     }));
-    
+
     try {
       // Get model and API key from local storage
       const MODEL_STORAGE_KEY = 'resumelm-default-model';
@@ -243,23 +249,9 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
       const updated = [...experiences];
       updated[expIndex].description[pointIndex] = improvedPoint;
       onChange(updated);
-    } catch (error: Error | unknown) {
-      if (error instanceof Error && (
-          error.message.toLowerCase().includes('api key') || 
-          error.message.toLowerCase().includes('unauthorized') ||
-          error.message.toLowerCase().includes('invalid key') ||
-          error.message.toLowerCase().includes('invalid x-api-key'))
-      ) {
-        setErrorMessage({
-          title: "API Key Error",
-          description: "There was an issue with your API key. Please check your settings and try again."
-        });
-      } else {
-        setErrorMessage({
-          title: "Error",
-          description: "Failed to improve point. Please try again."
-        });
-      }
+    } catch (error: any) {
+      const { title, description } = getUserFacingError(error);
+      setErrorMessage({ title, description });
       setShowErrorDialog(true);
     } finally {
       setLoadingPointAI(prev => ({
@@ -275,7 +267,7 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
       const updated = [...experiences];
       updated[expIndex].description[pointIndex] = improvedPoint.original;
       onChange(updated);
-      
+
       // Remove the improvement from state
       setImprovedPoints(prev => {
         const newState = { ...prev };
@@ -298,8 +290,8 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
             "flex flex-col @[400px]:flex-row gap-2",
             "transition-all duration-300 ease-in-out"
           )}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={addExperience}
               className={cn(
                 "flex-1 h-9 min-w-[120px]",
@@ -329,8 +321,8 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
         </div>
 
         {experiences.map((exp, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className={cn(
               "relative group transition-all duration-300",
               "bg-gradient-to-r from-cyan-500/5 via-cyan-500/10 to-blue-500/5",
@@ -343,7 +335,7 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
                 <GripVertical className="h-4 w-4 text-cyan-600" />
               </div>
             </div>
-            
+
             <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
               {/* Header with Delete Button */}
               <div className="space-y-2 sm:space-y-3">
@@ -366,8 +358,8 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
                       POSITION
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={() => removeExperience(index)}
                     className="text-gray-400 hover:text-red-500 transition-colors duration-300"
@@ -441,7 +433,7 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
                       <div key={descIndex} className="flex gap-1 items-start group/item">
                         <div className="flex-1">
                           <Tiptap
-                            content={desc} 
+                            content={desc}
                             onChange={(newContent) => {
                               const updated = [...experiences];
                               updated[index].description[descIndex] = newContent;
@@ -578,8 +570,8 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
                                       )}
                                     </Button>
                                   </TooltipTrigger>
-                                  <TooltipContent 
-                                    side="bottom" 
+                                  <TooltipContent
+                                    side="bottom"
                                     align="start"
                                     sideOffset={2}
                                     className={cn(
@@ -610,12 +602,13 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
                         </div>
                       </div>
                     ))}
-                    
+
                     {/* AI Suggestions */}
                     <AISuggestions
                       suggestions={aiSuggestions[index] || []}
                       onApprove={(suggestion) => approveSuggestion(index, suggestion)}
                       onDelete={(suggestionId) => deleteSuggestion(index, suggestionId)}
+                      onApproveAll={() => approveAllSuggestions(index)}
                     />
 
                     {exp.description.length === 0 && !aiSuggestions[index]?.length && (
@@ -676,7 +669,7 @@ export const WorkExperienceForm = memo(function WorkExperienceFormComponent({
           </Card>
         ))}
       </div>
-      
+
       {/* Add Error Alert Dialog at the end */}
       <ApiErrorDialog
         open={showErrorDialog}

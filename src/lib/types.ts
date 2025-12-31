@@ -67,6 +67,12 @@ export interface SectionConfig {
   style?: 'grouped' | 'list' | 'grid';
 }
 
+export interface CustomSection {
+  id: string;
+  title: string;
+  items: string[];
+}
+
 export interface Resume {
   id: string;
   user_id: string;
@@ -77,6 +83,7 @@ export interface Resume {
   first_name: string;
   last_name: string;
   email: string;
+  summary?: string;
   phone_number?: string;
   location?: string;
   website?: string;
@@ -86,6 +93,7 @@ export interface Resume {
   education: Education[];
   skills: Skill[];
   projects: Project[];
+  custom_sections?: CustomSection[];
   created_at: string;
   updated_at: string;
   document_settings?: DocumentSettings;
@@ -145,6 +153,9 @@ export interface DocumentSettings {
 
   show_ubc_footer?: boolean;
   footer_width?: number; // Percentage width of the footer
+
+  // Template Selection
+  template?: 'modern' | 'professional' | 'minimal';
 }
 
 export interface Profile {
@@ -198,22 +209,22 @@ export const AI_PROVIDERS = {
 export type AIProviderOld = typeof AI_PROVIDERS[keyof typeof AI_PROVIDERS];
 
 // ServiceName is used across the app for API key management
-export type ServiceName = 
+export type ServiceName =
   | 'openai'
   // | 'azure'
   | 'anthropic'
   | 'openrouter';
-  // | 'bedrock'
-  // | 'google'
-  // | 'vertex'
-  // | 'mistral'
-  // | 'xai'
-  // | 'together'
-  // | 'cohere'
-  // | 'fireworks'
-  // | 'deepinfra'
-  // | 'groq'
-  // | 'deepseek';
+// | 'bedrock'
+// | 'google'
+// | 'vertex'
+// | 'mistral'
+// | 'xai'
+// | 'together'
+// | 'cohere'
+// | 'fireworks'
+// | 'deepinfra'
+// | 'groq'
+// | 'deepseek';
 
 // Re-export AI model types from centralized location (except AIProvider to avoid conflict)
 export type { AIModel, ApiKey, AIConfig } from './ai-models';
