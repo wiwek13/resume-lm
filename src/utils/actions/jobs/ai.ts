@@ -224,6 +224,12 @@ TIER 2 (Achievement): Achieved, Delivered, Exceeded, Accelerated, Transformed
 TIER 3 (Technical): Engineered, Architected, Optimized, Automated, Integrated
 TIER 4 (Collaboration): Collaborated, Partnered, Coordinated, Facilitated
 
+### 6.1 VERB VARIETY (CRITICAL - AVOID REPETITION)
+**NEVER use the same action verb more than once in the entire resume.**
+- If you use "Architected" for one bullet, use "Built", "Designed", or "Developed" for similar bullets
+- Track verbs you've used and pick alternatives: Led/Directed/Managed, Built/Developed/Created, Optimized/Improved/Enhanced
+- Repetitive verbs (e.g., "Architected" appearing 3+ times) make the resume look AI-generated
+
 ### 7. QUANTIFICATION ENHANCEMENT
 - Preserve ALL existing metrics and numbers
 - If context allows, make implicit metrics explicit
@@ -248,10 +254,19 @@ If resume title is semantically equivalent but worded differently:
 - **USE BOLD FORMATTING**: Use **double asterisks** to bold:
   - Key metrics and numbers (e.g., **99.9%**, **50TB**, **10M+**)
   - Important technologies mentioned in JD (e.g., **AWS**, **Kubernetes**, **Python**)
-  - Action verbs at the start of bullets (e.g., **Engineered**, **Architected**, **Led**)
   - Company/product names when emphasizing achievements
+  - Do NOT bold action verbs at the start of bullets
 
-Your mission: Achieve maximum ATS match score (target 85%+) while maintaining 100% factual accuracy.
+## ONE PAGE OPTIMIZATION (CRITICAL):
+- **BREVITY IS KEY**: Keep each bullet point to 1-2 lines maximum
+- **3-5 bullets per role**: Prioritize the most impactful achievements, remove redundant/weaker bullets
+- **Consolidate similar points**: Merge related achievements into single powerful bullets
+- **Remove filler words**: Cut "Successfully", "Effectively", "In order to", etc.
+- **Skills section**: Max 3-4 categories, prioritize JD-relevant skills
+- **Projects**: Keep only 2-3 most relevant projects with 2-3 bullets each
+- **Target length**: Entire resume should fit on ONE PAGE (approximately 400-500 words total)
+
+Your mission: Achieve maximum ATS match score (target 85%+) while maintaining 100% factual accuracy AND fitting on ONE PAGE.
         `,
         prompt: `
 ## RESUME TO OPTIMIZE:

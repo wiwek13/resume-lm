@@ -305,7 +305,7 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
               "data-[state=closed]:py-1"
             )}>
               <div className={cn(
-                "flex items-center w-full",
+                "flex items-center w-full justify-between",
                 "transition-transform duration-300",
                 "group-hover:scale-[0.99]",
                 "group-data-[state=closed]:scale-95"
@@ -323,6 +323,10 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
                   </div>
                   <Logo className="text-xs" asLink={false} />
                 </div>
+                {/* Minimize hint text - only visible when open */}
+                <span className="text-xs text-purple-400 group-data-[state=closed]:hidden mr-6">
+                  Click to minimize
+                </span>
               </div>
             </AccordionTrigger>
 
