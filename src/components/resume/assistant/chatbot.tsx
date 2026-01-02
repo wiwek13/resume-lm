@@ -76,7 +76,24 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
   const { defaultModel } = useDefaultModel();
   const { customPrompts } = useCustomPrompts();
 
-  const [originalResume, setOriginalResume] = React.useState<Resume | null>(null);
+  // pendingUpdates stores AI-suggested changes until user accepts/rejects
+  const [pendingUpdates, setPendingUpdates] = React.useState<{
+    basic_info?: Partial<{
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone_number: string;
+      location: string;
+      website: string;
+      linkedin_url: string;
+      github_url: string;
+    }>;
+    summary?: string;
+    work_experience?: WorkExperience[];
+    education?: Education[];
+    skills?: Skill[];
+    projects?: Project[];
+  } | null>(null);
   const [isInitialLoading, setIsInitialLoading] = React.useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState<string>("");
@@ -176,34 +193,9 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
           projects?: Project[];
         };
 
-        // Store the current resume state before applying updates
-        setOriginalResume({ ...resume });
-
-        // Apply updates as before
-        if (updates.basic_info) {
-          Object.entries(updates.basic_info).forEach(([key, value]) => {
-            if (value !== undefined) {
-              onResumeChange(key as keyof Resume, value);
-            }
-          });
-        }
-
-        const sections = {
-          work_experience: updates.work_experience,
-          education: updates.education,
-          skills: updates.skills,
-          projects: updates.projects,
-        };
-
-        Object.entries(sections).forEach(([key, value]) => {
-          if (value !== undefined) {
-            onResumeChange(key as keyof Resume, value);
-          }
-        });
-
-        if (updates.summary) {
-          onResumeChange('summary', updates.summary);
-        }
+        // STORE updates as pending - DO NOT apply immediately
+        // Changes will be applied when user clicks "Accept"
+        setPendingUpdates(updates);
 
         // Add a simple, serializable result for the tool call
         const result = { success: true };
@@ -265,7 +257,7 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
 
   const handleClearChat = useCallback(() => {
     setMessages([]);
-    setOriginalResume(null);
+
     setEditingMessageId(null);
     setEditContent("");
   }, [setMessages]);
@@ -573,15 +565,38 @@ export default function ChatBot({ resume, onResumeChange, job, externalMessage, 
                                 return (
                                   <div key={toolCallId} className="mt-2 w-[90%]">
                                     <WholeResumeSuggestion
-                                      onReject={() => {
-                                        if (originalResume) {
-                                          Object.keys(originalResume).forEach((key) => {
-                                            if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
-                                              onResumeChange(key as keyof Resume, originalResume[key as keyof Resume]);
+                                      onAccept={() => {
+                                        if (pendingUpdates) {
+                                          // Apply updates when user accepts
+                                          if (pendingUpdates.basic_info) {
+                                            Object.entries(pendingUpdates.basic_info).forEach(([key, value]) => {
+                                              if (value !== undefined) {
+                                                onResumeChange(key as keyof Resume, value);
+                                              }
+                                            });
+                                          }
+                                          const sections = {
+                                            work_experience: pendingUpdates.work_experience,
+                                            education: pendingUpdates.education,
+                                            skills: pendingUpdates.skills,
+                                            projects: pendingUpdates.projects,
+                                          };
+                                          Object.entries(sections).forEach(([key, value]) => {
+                                            if (value !== undefined) {
+                                              onResumeChange(key as keyof Resume, value);
                                             }
                                           });
-                                          setOriginalResume(null);
+                                          if (pendingUpdates.summary) {
+                                            onResumeChange('summary', pendingUpdates.summary);
+                                          }
+                                          setPendingUpdates(null);
+
                                         }
+                                      }}
+                                      onReject={() => {
+                                        // Discard pending changes and keep original
+                                        setPendingUpdates(null);
+
                                       }}
                                     />
                                   </div>

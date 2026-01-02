@@ -1,6 +1,6 @@
 'use client';
 
-import { Resume } from "@/lib/types";
+import { Resume, Job } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -19,10 +19,12 @@ import { ResumeCompareDialog } from "../../management/dialogs/resume-compare-dia
 
 interface ResumeEditorActionsProps {
   onResumeChange: (field: keyof Resume, value: Resume[keyof Resume]) => void;
+  job?: Job | null;
 }
 
 export function ResumeEditorActions({
-  onResumeChange
+  onResumeChange,
+  job
 }: ResumeEditorActionsProps) {
   const { state, dispatch } = useResumeContext();
   const { resume, isSaving } = state;
@@ -121,7 +123,9 @@ export function ResumeEditorActions({
                       const url = URL.createObjectURL(blob);
                       const link = document.createElement('a');
                       link.href = url;
-                      link.download = `${resume.first_name}_${resume.last_name}_Resume.pdf`;
+                      // Company name first, then person name
+                      const companyPrefix = job?.company_name ? `${job.company_name.replace(/[^a-zA-Z0-9]/g, '_')}_` : '';
+                      link.download = `${companyPrefix}${resume.first_name}_${resume.last_name}_Resume.pdf`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
@@ -138,9 +142,11 @@ export function ResumeEditorActions({
                         throw new Error('Cover letter content not found');
                       }
 
+                      // Company name first, then person name
+                      const companyPrefix = job?.company_name ? `${job.company_name.replace(/[^a-zA-Z0-9]/g, '_')}_` : '';
                       const opt = {
                         margin: [0, 0, -0.5, 0],
-                        filename: `${resume.first_name}_${resume.last_name}_Cover_Letter.pdf`,
+                        filename: `${companyPrefix}${resume.first_name}_${resume.last_name}_Cover_Letter.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
                         html2canvas: {
                           backgroundColor: 'red',

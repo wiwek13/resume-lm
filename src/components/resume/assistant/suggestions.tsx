@@ -21,6 +21,7 @@ interface SuggestionProps {
 }
 
 interface WholeResumeSuggestionProps {
+  onAccept: () => void;
   onReject: () => void;
 }
 
@@ -28,6 +29,7 @@ interface WorkExperienceSuggestionProps {
   content: WorkExperience;
   currentContent: WorkExperience | null;
 }
+
 
 function WorkExperienceSuggestion({ content: work, currentContent: currentWork }: WorkExperienceSuggestionProps) {
   return (
@@ -57,7 +59,7 @@ function WorkExperienceSuggestion({ content: work, currentContent: currentWork }
       <div className="space-y-1.5">
         {work.description.map((point, index) => {
           const currentPoint = currentWork?.description?.[index];
-          const comparedWords = currentPoint 
+          const comparedWords = currentPoint
             ? compareDescriptions(currentPoint, point)
             : [{ text: point.replace(/\*\*/g, ''), isNew: true, isBold: false, isStart: true, isEnd: true }];
 
@@ -119,7 +121,7 @@ function ProjectSuggestion({ content: project, currentContent: currentProject }:
       <div className="space-y-2">
         {project.description.map((point, index) => {
           const currentPoint = currentProject?.description?.[index];
-          const comparedWords = currentPoint 
+          const comparedWords = currentPoint
             ? compareDescriptions(currentPoint, point)
             : [{ text: point.replace(/\*\*/g, ''), isNew: true, isBold: false, isStart: true, isEnd: true }];
 
@@ -184,7 +186,7 @@ function SkillSuggestion({ content: skill, currentContent: currentSkill }: Skill
       <div className="flex-1">
         <Tiptap
           content={skill.category}
-          onChange={() => {}}
+          onChange={() => { }}
           readOnly={true}
           variant="skill"
           className={cn(
@@ -200,7 +202,7 @@ function SkillSuggestion({ content: skill, currentContent: currentSkill }: Skill
       <div className="flex flex-wrap gap-2">
         {skill.items.map((item, index) => {
           const isNew = !currentSkill || isNewItem(currentSkill.items, skill.items, item);
-          
+
           return (
             <div
               key={index}
@@ -224,7 +226,7 @@ function SkillSuggestion({ content: skill, currentContent: currentSkill }: Skill
               <div className={cn(
                 "absolute inset-0 opacity-0 transition-opacity duration-500",
                 "group-hover:opacity-100",
-                isNew 
+                isNew
                   ? "bg-gradient-to-br from-emerald-100/50 via-teal-100/50 to-emerald-100/50"
                   : "bg-gradient-to-br from-gray-100/50 via-white to-gray-100/50"
               )} />
@@ -233,7 +235,7 @@ function SkillSuggestion({ content: skill, currentContent: currentSkill }: Skill
               <div className="relative px-3 py-1.5">
                 <Tiptap
                   content={item}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   readOnly={true}
                   variant="skill"
                   className={cn(
@@ -277,17 +279,17 @@ function EducationSuggestion({ content: education, currentContent: currentEducat
             !currentEducation || (currentEducation.degree !== education.degree || currentEducation.field !== education.field) && DIFF_HIGHLIGHT_CLASSES
           )}>
             <span>
-              {education.degree.split(/(\*\*.*?\*\*)/).map((part, i) => 
-                part.startsWith('**') && part.endsWith('**') ? 
-                  <strong key={i}>{part.slice(2, -2)}</strong> : 
+              {education.degree.split(/(\*\*.*?\*\*)/).map((part, i) =>
+                part.startsWith('**') && part.endsWith('**') ?
+                  <strong key={i}>{part.slice(2, -2)}</strong> :
                   part
               )}
             </span>
             {' in '}
             <span>
-              {education.field.split(/(\*\*.*?\*\*)/).map((part, i) => 
-                part.startsWith('**') && part.endsWith('**') ? 
-                  <strong key={i}>{part.slice(2, -2)}</strong> : 
+              {education.field.split(/(\*\*.*?\*\*)/).map((part, i) =>
+                part.startsWith('**') && part.endsWith('**') ?
+                  <strong key={i}>{part.slice(2, -2)}</strong> :
                   part
               )}
             </span>
@@ -310,7 +312,7 @@ function EducationSuggestion({ content: education, currentContent: currentEducat
         <div className="space-y-1.5">
           {education.achievements.map((achievement, index) => {
             const currentAchievement = currentEducation?.achievements?.[index];
-            const comparedWords = currentAchievement 
+            const comparedWords = currentAchievement
               ? compareDescriptions(currentAchievement, achievement)
               : [{ text: achievement.replace(/\*\*/g, ''), isNew: true, isBold: false, isStart: true, isEnd: true }];
 
@@ -363,7 +365,7 @@ function compareDescriptions(current: string, suggested: string): {
   const splitText = (text: string): string[] => {
     // First, split by bold markdown
     const parts = text.split(/(\*\*[^*]+\*\*)/).filter(Boolean);
-    
+
     // Then split non-bold parts by spaces while preserving bold parts
     return parts.flatMap(part => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -375,28 +377,28 @@ function compareDescriptions(current: string, suggested: string): {
 
   const currentText = cleanText(current);
   const suggestedText = cleanText(suggested);
-  
+
   const currentWords = splitText(currentText);
   const suggestedWords = splitText(suggestedText);
-  
+
   return suggestedWords.map((word, index) => {
     const isBold = word.startsWith('**') && word.endsWith('**');
     const cleanedWord = isBold ? word.slice(2, -2) : word;
-    
+
     // Check if the word exists in current text (considering bold status)
     const isNew = !currentWords.some(currentWord => {
       const currentIsBold = currentWord.startsWith('**') && currentWord.endsWith('**');
       const currentCleaned = currentIsBold ? currentWord.slice(2, -2) : currentWord;
       return currentCleaned === cleanedWord;
     });
-    
+
     // Check if adjacent words are new
     const prevWord = index > 0 ? suggestedWords[index - 1] : null;
     const nextWord = index < suggestedWords.length - 1 ? suggestedWords[index + 1] : null;
-    
+
     const prevIsNew = prevWord ? !currentWords.includes(prevWord) : false;
     const nextIsNew = nextWord ? !currentWords.includes(nextWord) : false;
-    
+
     return {
       text: cleanedWord,
       isNew,
@@ -406,7 +408,7 @@ function compareDescriptions(current: string, suggested: string): {
     };
   });
 }
-  
+
 
 function isNewItem<T>(current: T[] | undefined, suggested: T[] | undefined, item: T): boolean {
   if (!current) return true;
@@ -493,7 +495,7 @@ export function Suggestion({ type, content, currentContent, onAccept, onReject }
     )}>
       {/* Enhanced Background Pattern */}
       <div className="absolute inset-0  opacity-[0.15]" />
-      
+
       {/* Improved Floating Gradient Orbs */}
 
       {/* Content */}
@@ -537,7 +539,7 @@ export function Suggestion({ type, content, currentContent, onAccept, onReject }
               {/* Animated background on hover */}
               <div className="absolute inset-0 -z-10 bg-gradient-to-br from-rose-100 to-rose-200/90 
                 opacity-0 group-hover/button:opacity-100 transition-opacity duration-500" />
-              
+
               <div className="relative flex items-center justify-center gap-1.5">
                 <X className="h-3.5 w-3.5 transition-transform duration-500 group-hover/button:rotate-90" />
                 <span className="font-medium">Reject</span>
@@ -565,7 +567,7 @@ export function Suggestion({ type, content, currentContent, onAccept, onReject }
               {/* Animated background on hover */}
               <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-100 to-emerald-200/90 
                 opacity-0 group-hover/button:opacity-100 transition-opacity duration-500" />
-              
+
               <div className="relative flex items-center justify-center gap-1.5">
                 <Check className="h-3.5 w-3.5 transition-transform duration-500 group-hover/button:scale-110" />
                 <span className="font-medium">Accept</span>
@@ -578,12 +580,12 @@ export function Suggestion({ type, content, currentContent, onAccept, onReject }
   );
 }
 
-export function WholeResumeSuggestion({ onReject }: WholeResumeSuggestionProps) {
+export function WholeResumeSuggestion({ onAccept, onReject }: WholeResumeSuggestionProps) {
   const [status, setStatus] = useState<'pending' | 'accepted' | 'rejected'>('pending');
 
   const handleAccept = () => {
     setStatus('accepted');
-    // No need to do anything as changes are already applied
+    onAccept(); // Apply the pending changes
   };
 
   const handleReject = () => {
@@ -656,7 +658,7 @@ export function WholeResumeSuggestion({ onReject }: WholeResumeSuggestionProps) 
           >
             <div className="absolute inset-0 -z-10 bg-gradient-to-br from-rose-100 to-rose-200/90 
               opacity-0 group-hover/button:opacity-100 transition-opacity duration-500" />
-            
+
             <div className="relative flex items-center justify-center gap-1.5">
               <X className="h-3.5 w-3.5 transition-transform duration-500 group-hover/button:rotate-90" />
               <span className="font-medium">Undo Changes</span>
@@ -683,7 +685,7 @@ export function WholeResumeSuggestion({ onReject }: WholeResumeSuggestionProps) 
           >
             <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-100 to-emerald-200/90 
               opacity-0 group-hover/button:opacity-100 transition-opacity duration-500" />
-            
+
             <div className="relative flex items-center justify-center gap-1.5">
               <Check className="h-3.5 w-3.5 transition-transform duration-500 group-hover/button:scale-110" />
               <span className="font-medium">Keep Changes</span>

@@ -30,7 +30,7 @@ export function CoverLetterPanel({
   const [errorMessage, setErrorMessage] = useState({ title: '', description: '' });
 
   const updateField = (field: keyof Resume, value: Resume[keyof Resume]) => {
-    dispatch({ 
+    dispatch({
       type: 'UPDATE_FIELD',
       field,
       value
@@ -39,9 +39,12 @@ export function CoverLetterPanel({
 
   const generateCoverLetter = async () => {
     if (!job) return;
-    
+
     setIsGenerating(true);
-    
+    console.log('Starting cover letter generation...');
+    console.log('Job:', job);
+    console.log('Resume:', resume);
+
     try {
       // Get model and API key from local storage
       const MODEL_STORAGE_KEY = 'resumelm-default-model';
@@ -56,6 +59,9 @@ export function CoverLetterPanel({
       } catch (error) {
         console.error('Error parsing API keys:', error);
       }
+
+      console.log('API Keys found:', apiKeys.length);
+      console.log('Selected Model:', selectedModel);
 
       // Prompt
       const prompt = `Write a professional cover letter for the following job using my resume information:
@@ -73,7 +79,7 @@ export function CoverLetterPanel({
       ${resume.github_url ? `GitHub: ${resume.github_url}` : ''}
 
       ${customPrompt ? `\nAdditional requirements: ${customPrompt}` : ''}`;
-      
+
 
       // Call The Model
       const { output } = await generate(prompt, {
@@ -82,12 +88,15 @@ export function CoverLetterPanel({
         apiKeys
       });
 
+      console.log('Model called, receiving output...');
+
       // Generated Content
       let generatedContent = '';
 
 
       // Update Resume Context
       for await (const delta of readStreamableValue(output)) {
+        console.log('Received delta:', delta?.length);
         generatedContent += delta;
         // Update resume context directly
         // console.log('Generated Content:', generatedContent);
@@ -95,15 +104,15 @@ export function CoverLetterPanel({
           content: generatedContent,
         });
       }
-      
-      
+
+
     } catch (error: Error | unknown) {
-      console.error('Generation error:', error);
+      console.error('Generation execution error:', error);
       if (error instanceof Error && (
-          error.message.toLowerCase().includes('api key') || 
-          error.message.toLowerCase().includes('unauthorized') ||
-          error.message.toLowerCase().includes('invalid key') ||
-          error.message.toLowerCase().includes('invalid x-api-key'))
+        error.message.toLowerCase().includes('api key') ||
+        error.message.toLowerCase().includes('unauthorized') ||
+        error.message.toLowerCase().includes('invalid key') ||
+        error.message.toLowerCase().includes('invalid x-api-key'))
       ) {
         setErrorMessage({
           title: "API Key Error",
@@ -133,12 +142,12 @@ export function CoverLetterPanel({
           </div>
           <h3 className="text-lg font-semibold text-purple-900">Cover Letter</h3>
         </div>
-        
+
         <p className="text-sm text-purple-700">
           To generate a cover letter, please first tailor this base resume to a specific job.
         </p>
-        
-        <CreateTailoredResumeDialog 
+
+        <CreateTailoredResumeDialog
           baseResumes={[resume]}
         >
           <Button
