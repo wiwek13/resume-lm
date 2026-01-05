@@ -64,12 +64,23 @@ CREATE TABLE IF NOT EXISTS public.jobs (
   keywords jsonb NULL DEFAULT '[]'::jsonb,
   work_location text NULL DEFAULT 'in_person'::text,
   employment_type text NULL DEFAULT 'full_time'::text,
+  status text NULL DEFAULT 'saved'::text,
   is_active boolean NULL DEFAULT true,
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT jobs_pkey PRIMARY KEY (id),
   CONSTRAINT jobs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE
 ) TABLESPACE pg_default;
+
+-- Add updated_at trigger only if table was just created (idempotent setup handles this via create or replace usually, but separate trigger statements are fine)
+
+-- MIGRATION for existing tables (Run this if you already have the jobs table)
+-- DO $$ 
+-- BEGIN 
+--     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='jobs' AND column_name='status') THEN 
+--         ALTER TABLE public.jobs ADD COLUMN status text NULL DEFAULT 'saved'::text; 
+--     END IF; 
+-- END $$;
 
 -- Create updated_at trigger for jobs
 DROP TRIGGER IF EXISTS update_jobs_updated_at ON public.jobs;

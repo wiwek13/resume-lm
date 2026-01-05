@@ -13,15 +13,29 @@
 
 </div>
 
-## 📊 Proven Results That Matter
+## 🚀 Fork Enhancements & New Features
 
-<div align="center">
+This fork extends the original ResumeLM with powerful new capabilities designed for serious job seekers:
 
-| 📈 **500+ Resumes Created** | 🎯 **89% Interview Rate** | ⭐ **4.9/5 User Rating** | ⏱️ **15 min Setup Time** |
-|:---------------------------:|:-------------------------:|:------------------------:|:-------------------------:|
-| Professional resumes built | Higher interview success  | Excellent user satisfaction | Quick and easy setup |
+### 1. 📋 Job Application Tracker
+Keep track of every application in one place.
+- **Kanban-style tracking**: Statuses for Saved, Applied, Interviewing, Offer, and Rejected.
+- **Job Details**: Store job descriptions, salary ranges, and application links.
+- **Resume Linking**: Automatically link tailored resumes to specific job applications.
 
-</div>
+### 2. 📝 Automated Cover Letter Generator
+Stop writing cover letters from scratch.
+- **AI-Generated**: Automatically generates a tailored cover letter when you create a resume.
+- **Context-Aware**: Uses your resume and the specific job description to craft a compelling narrative.
+- **Native PDF Export**: Robust, server-side PDF generation (using `@react-pdf/renderer`) ensures your cover letter always looks perfect and is never blank.
+
+### 3. 🤖 Robust AI Integration
+More reliable and cost-effective AI.
+- **OpenRouter Support**: Use any model you want via OpenRouter (DeepSeek, Llama 3, etc.).
+- **Free Model Fallbacks**: Automatically falls back to free models if premium keys are missing or exhausted.
+- **Smart Error Handling**: Graceful degradation and retry logic for network or API failures.
+
+---
 
 ## 🎯 Why Choose ResumeLM?
 
@@ -83,7 +97,7 @@ No credit card required • No signup fees • Open source
 - **OpenAI GPT** - Advanced content generation
 - **Claude AI** - Alternative AI model support
 - **Gemini AI** - Google's AI integration
-- **DeepSeek** - Cost-effective AI processing
+- **DeepSeek** - Cost-effective AI processing (via OpenRouter)
 - **Groq** - High-speed AI inference
 
 ### Backend & Database
@@ -92,28 +106,10 @@ No credit card required • No signup fees • Open source
 - **Row Level Security** - Enterprise-grade security
 
 ### Additional Features
-- **React PDF** - Professional PDF generation
+- **React PDF** - Professional PDF generation (for both Resumes and Cover Letters)
 - **Stripe Integration** - Secure payment processing
 - **Real-time Updates** - Live preview and editing
 - **Mobile Responsive** - Works on all devices
-
-## 📱 Mobile-First Design
-
-ResumeLM is built with a mobile-first approach, ensuring your resume building experience is seamless across all devices:
-
-- 📱 **Mobile Optimized** - Full functionality on smartphones
-- 💻 **Desktop Enhanced** - Rich editing experience on larger screens
-- 🎨 **Responsive Design** - Adapts to any screen size
-- ⚡ **Fast Loading** - Optimized for performance
-
-## 🎨 Modern Design System
-
-### Visual Design Principles
-- **Layered Depth** - Multiple translucent layers create visual hierarchy
-- **Organic Motion** - Subtle animations suggest liveliness without distraction
-- **Purposeful White Space** - Generous spacing improves content digestion
-- **Consistent Interaction** - Predictable hover and active states
-- **Gradient Aesthetics** - Soft, professional color schemes
 
 ## 🔧 Installation & Setup
 
@@ -148,10 +144,11 @@ DATABASE_URL=your_postgresql_url
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# AI Services
+# AI Services (Add at least one)
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_claude_key
 GOOGLE_AI_API_KEY=your_gemini_key
+OPENROUTER_API_KEY=your_openrouter_key # Recommended for access to DeepSeek etc.
 
 # Authentication
 NEXTAUTH_URL=http://localhost:3000
@@ -207,87 +204,6 @@ pnpm dev
 | **Redis Commander** | http://localhost:8081 | Redis management UI |
 
 > 📖 See [docker/DOCKER.md](docker/DOCKER.md) for full Docker documentation including full-stack mode.
-
-## 📊 Database Architecture
-
-### Core Tables Structure
-
-#### Profiles Table
-- Stores user's base information and resume components
-- JSON fields for complex data (work_experience, education, skills)
-- One-to-one relationship with auth.users
-
-#### Resumes Table
-- Base and tailored resume versions
-- Links to jobs for targeted applications
-- JSONB for section_order and section_configs
-- Version control and tracking
-
-#### Jobs Table
-- Job listings with requirements and details
-- Salary range as flexible JSONB structure
-- Application status tracking
-
-### Security Features
-- **Row Level Security (RLS)** - Users only access their own data
-- **Authentication Integration** - Secure user management
-- **Data Encryption** - Sensitive information protection
-
-## 🌟 Key Benefits for Job Seekers
-
-### For Individual Users
-- ✅ **Free Forever** - Core features always free
-- ✅ **No Hidden Costs** - Transparent pricing
-- ✅ **ATS Optimization** - Beat applicant tracking systems
-- ✅ **Multiple Formats** - PDF, Word, and web formats
-- ✅ **Industry Templates** - Tailored for different fields
-
-### For Developers
-- ✅ **Open Source** - Full access to source code
-- ✅ **Modern Stack** - Latest technologies and best practices
-- ✅ **Extensible** - Easy to customize and extend
-- ✅ **Well Documented** - Comprehensive documentation
-- ✅ **Active Community** - Regular updates and support
-
-## 🎯 SEO Keywords & Use Cases
-
-**Primary Keywords:** AI resume builder, free resume maker, ATS-optimized resume, professional resume template, job application tool
-
-**Use Cases:**
-- Recent graduates entering the job market
-- Career changers looking to pivot industries
-- Professionals seeking advancement opportunities
-- Freelancers building their personal brand
-- Anyone wanting to improve their resume quality
-
-## 📈 Performance & Analytics
-
-### Core Metrics
-- **Page Load Speed** - Under 2 seconds average
-- **Mobile Performance** - 95+ Lighthouse score
-- **SEO Optimization** - Structured data and meta tags
-- **Accessibility** - WCAG 2.1 AA compliant
-
-### User Success Stories
-- 89% of users report getting more interview calls
-- Average setup time reduced to just 15 minutes
-- 4.9/5 star rating from active users
-- 500+ professional resumes created monthly
-
-## 🔮 Roadmap & Future Features
-
-### Short Term (Q1 2025)
-- [ ] Enhanced AI tailoring algorithms
-- [ ] Additional resume templates and themes
-- [ ] Advanced PDF customization options
-- [ ] Job application tracking system
-
-### Long Term (2025)
-- [ ] LinkedIn integration and sync
-- [ ] Interview preparation tools
-- [ ] Salary negotiation guidance
-- [ ] Career path recommendations
-- [ ] Mobile app development
 
 ## 🤝 Contributing
 

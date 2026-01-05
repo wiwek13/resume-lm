@@ -281,7 +281,8 @@ export async function createTailoredResume(
   jobId: string | null,
   jobTitle: string,
   companyName: string,
-  tailoredContent: z.infer<typeof simplifiedResumeSchema>
+  tailoredContent: z.infer<typeof simplifiedResumeSchema>,
+  coverLetterContent?: string // Optional cover letter content
 ) {
   console.log('[createTailoredResume] Received jobId:', jobId);
   console.log('[createTailoredResume] baseResume ID:', baseResume?.id);
@@ -294,26 +295,36 @@ export async function createTailoredResume(
     throw new Error('User not authenticated');
   }
 
+  const safeJobTitle = jobTitle || 'Target Role';
+  const safeCompanyName = companyName || 'Target Company';
+  const finalName = `${safeJobTitle} at ${safeCompanyName}`;
+
   const newResume = {
     ...tailoredContent,
     user_id: user.id,
     job_id: jobId,
     is_base_resume: false,
-    first_name: baseResume.first_name,
-    last_name: baseResume.last_name,
-    email: baseResume.email,
-    phone_number: baseResume.phone_number,
-    location: baseResume.location,
-    website: baseResume.website,
-    linkedin_url: baseResume.linkedin_url,
-    github_url: baseResume.github_url,
+    first_name: baseResume.first_name || '',
+    last_name: baseResume.last_name || '',
+    email: baseResume.email || '',
+    phone_number: baseResume.phone_number || '',
+    location: baseResume.location || '',
+    website: baseResume.website || '',
+    linkedin_url: baseResume.linkedin_url || '',
+    github_url: baseResume.github_url || '',
     document_settings: baseResume.document_settings,
     section_configs: baseResume.section_configs,
     section_order: baseResume.section_order,
-    resume_title: `${jobTitle} at ${companyName}`,
-    name: `${jobTitle} at ${companyName}`,
+    resume_title: finalName,
+    name: finalName,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    // Add cover letter if content is provided
+    has_cover_letter: !!coverLetterContent,
+    cover_letter: coverLetterContent ? {
+      content: coverLetterContent,
+      lastUpdated: new Date().toISOString()
+    } : null
   };
 
   const { data, error } = await supabase
@@ -322,7 +333,10 @@ export async function createTailoredResume(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('[createTailoredResume] Supabase Insert Error:', JSON.stringify(error, null, 2));
+    throw new Error(`Failed to create tailored resume: ${error.message} (Code: ${error.code})`);
+  }
   return data;
 }
 

@@ -8,46 +8,69 @@ import { z } from "zod";
 import { JobListingParams } from "./schema";
 
 export async function createJob(jobListing: z.infer<typeof simplifiedJobSchema>) {
-  
+
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new Error('User not authenticated');
   }
 
   const jobData = {
     user_id: user.id,
-    company_name: jobListing.company_name,
-    position_title: jobListing.position_title,
-    job_url: jobListing.job_url,
-    description: jobListing.description,
-    location: jobListing.location,
-    salary_range: jobListing.salary_range,
-    keywords: jobListing.keywords,
-    work_location: jobListing.work_location || 'in_person', 
-    employment_type: jobListing.employment_type || 'full_time', 
+    company_name: jobListing.company_name || 'Unknown Company',
+    position_title: jobListing.position_title || 'Untitled Position', // Ensure NOT NULL constraint
+    job_url: jobListing.job_url || '',
+    description: jobListing.description || '',
+    location: jobListing.location || '',
+    salary_range: jobListing.salary_range || '',
+    keywords: jobListing.keywords || [],
+    work_location: jobListing.work_location || 'in_person',
+    employment_type: jobListing.employment_type || 'full_time',
+    status: 'saved', // Default status
     is_active: true
   };
 
-  const { data, error } = await supabase
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert([jobData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[createJob] Supabase Insert Error:', JSON.stringify(error, null, 2));
+      throw new Error(`Failed to create job: ${error.message} (Code: ${error.code})`);
+    }
+
+    return data;
+  } catch (err) {
+    console.error('[createJob] Unexpected Error:', err);
+    throw err;
+  }
+}
+
+export async function updateJobStatus(jobId: string, status: Job['status']) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
     .from('jobs')
-    .insert([jobData])
-    .select()
-    .single();
+    .update({ status })
+    .eq('id', jobId);
 
   if (error) {
-    console.error('[createJob] Error creating job:', error);
-    throw error;
+    console.error('Error updating job status:', error);
+    throw new Error('Failed to update job status');
   }
-  
-  return data;
+
+  revalidatePath('/tracker');
+  revalidatePath('/', 'layout');
 }
 
 export async function deleteJob(jobId: string): Promise<void> {
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
-  
+
   if (error || !user) {
     throw new Error('User not authenticated');
   }
@@ -73,17 +96,17 @@ export async function deleteJob(jobId: string): Promise<void> {
   affectedResumes?.forEach(resume => {
     revalidatePath(`/resumes/${resume.id}`);
   });
-  
+
   // Also revalidate the general paths
   revalidatePath('/', 'layout');
   revalidatePath('/resumes', 'layout');
 }
 
 
-export async function getJobListings({ 
-  page = 1, 
-  pageSize = 10, 
-  filters 
+export async function getJobListings({
+  page = 1,
+  pageSize = 10,
+  filters
 }: JobListingParams) {
   const supabase = await createClient();
 
@@ -145,7 +168,7 @@ export async function deleteTailoredJob(jobId: string): Promise<void> {
 export async function createEmptyJob(): Promise<Job> {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  
+
   if (userError || !user) {
     throw new Error('User not authenticated');
   }

@@ -501,3 +501,48 @@ export async function analyzeHumanScore(
 
   return object.content;
 }
+
+
+// GENERATE COVER LETTER CONTENT
+export async function generateCoverLetterContent(
+  resume: Resume,
+  jobDescription: string,
+  config?: AIConfig
+): Promise<string> {
+  const subscriptionPlan = await getSubscriptionPlan();
+  const isPro = subscriptionPlan === 'pro';
+  const aiClient = isPro ? initializeAIClient(config, isPro) : initializeAIClient(config);
+
+  const { object } = await withAIErrorHandling(() => generateObject({
+    model: aiClient,
+    schema: z.object({
+      content: z.string().describe("The generated cover letter in HTML format")
+    }),
+    prompt: `Write a professional cover letter for the following job using my resume information:
+    
+    JOB DESCRIPTION:
+    ${jobDescription.slice(0, 5000)}
+    
+    RESUME:
+    ${JSON.stringify(resume)}
+    
+    Today's date is ${new Date().toLocaleDateString()}.
+
+    Please use my contact information in the letter:
+    Full Name: ${resume.first_name} ${resume.last_name}
+    Email: ${resume.email}
+    ${resume.phone_number ? `Phone: ${resume.phone_number}` : ''}
+    ${resume.linkedin_url ? `LinkedIn: ${resume.linkedin_url}` : ''}
+    ${resume.github_url ? `GitHub: ${resume.github_url}` : ''}
+
+    INSTRUCTIONS:
+   1. **Source Material:** Use ONLY the facts provided in the resume. Do not invent metrics, project names, or achievements.
+   2. **Structure:** Create 4 short paragraphs (Intro, Skills, Company Alignment, Closing).
+   3. **Tone:** Professional, enthusiastic, and direct.
+   4. **Length:** Keep it under 400 words to fit on a single page.
+   5. **Format:** Use simple HTML tags (<p>, <br>). `,
+    system: `You are an expert cover letter writer. Write a professional, concise cover letter.`,
+  }));
+
+  return object.content;
+}

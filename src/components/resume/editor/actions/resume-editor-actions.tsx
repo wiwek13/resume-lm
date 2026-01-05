@@ -134,38 +134,31 @@ export function ResumeEditorActions({
 
                     // Download Cover Letter if selected and exists
                     if (downloadOptions.coverLetter && resume.has_cover_letter) {
-                      // Dynamically import html2pdf only when needed
-                      const html2pdf = (await import('html2pdf.js')).default;
-
-                      const coverLetterElement = document.getElementById('cover-letter-content');
-                      if (!coverLetterElement) {
-                        throw new Error('Cover letter content not found');
+                      console.log('DL Start - Resume:', resume);
+                      const content = (resume.cover_letter as any)?.content;
+                      console.log('DL Content:', content);
+                      if (!content) {
+                        console.error('DL Error: Content empty');
+                        throw new Error('Cover letter content is empty');
                       }
 
-                      // Company name first, then person name
-                      const companyPrefix = job?.company_name ? `${job.company_name.replace(/[^a-zA-Z0-9]/g, '_')}_` : '';
-                      const opt = {
-                        margin: [0, 0, -0.5, 0],
-                        filename: `${companyPrefix}${resume.first_name}_${resume.last_name}_Cover_Letter.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: {
-                          backgroundColor: 'red',
-                          useCORS: true,
-                          letterRendering: true,
-                          // width: 700,
-                          // height: 1000,
-                          // windowWidth: 700,
-                          logging: true,
-                          // windowHeight: 2000
-                        },
-                        jsPDF: {
-                          unit: 'in',
-                          format: 'letter',
-                          orientation: 'portrait'
-                        }
-                      };
+                      // Dynamically import CoverLetterPDFDocument
+                      const { CoverLetterPDFDocument } = await import('../preview/cover-letter-pdf-document');
 
-                      await html2pdf().set(opt).from(coverLetterElement).save();
+                      const blob = await pdf(<CoverLetterPDFDocument resume={resume} content={content} />).toBlob();
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+
+                      const companyPrefix = job?.company_name ? `${job.company_name.replace(/[^a-zA-Z0-9]/g, '_')}_` : '';
+                      link.download = `${companyPrefix}${resume.first_name}_${resume.last_name}_Cover_Letter.pdf`;
+
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+
+
                     }
 
                     toast({
